@@ -1,0 +1,9 @@
+
+Language: Cpp
+BasedOnStyle: Microsoft  
+
+AlignConsecutiveDeclarations: false
+AlignConsecutiveAssignments: true
+AlignAfterOpenBracket: Align
+SortIncludes: 'false'
+ColumnLimit: '120'
