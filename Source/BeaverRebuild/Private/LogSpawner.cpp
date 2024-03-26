@@ -17,22 +17,23 @@ ALogSpawner::ALogSpawner()
     spawnLogParams.minAngle       = 45.f;
     spawnLogParams.maxAngle       = 75.f;
     spawnLogParams.speedChange    = 1.f;
-    spawnParams.spawnRangeLeft    = -170;
-    spawnParams.spawnRangeRight   = 150;
-    spawnParams.distBetweenLogs   = 100;
-    spawnParams.spawnRate         = 3.f;
-    spawnParams.stdChance         = 0.9f;
-    spawnParams.rateChange        = 0.03f;
-    spawnParams.spawnerLocation   = FVector{50.f, 20.f, 510.f};
+
+    spawnParams.spawnRangeLeft  = -170;
+    spawnParams.spawnRangeRight = 150;
+    spawnParams.distBetweenLogs = 100;
+    spawnParams.spawnRate       = 3.f;
+    spawnParams.stdChance       = 0.9f;
+    spawnParams.rateChange      = 0.03f;
+    spawnParams.spawnerLocation = FVector{50.f, 20.f, 510.f};
 }
 
 void ALogSpawner::BeginPlay()
 {
     Super::BeginPlay();
 
-    Cast<ABeaverGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->logSpawner = this;
+    StaticCast<ABeaverGameMode*>(UGameplayStatics::GetGameMode(GetWorld()))->logSpawner = this;
 
-    StartSpawn();
+    //StartSpawn();
 
     SetActorLocation(spawnParams.spawnerLocation);
 }
@@ -44,21 +45,20 @@ void ALogSpawner::Tick(float DeltaTime)
 
 void ALogSpawner::SpawnLog()
 {
-    const FVector direction =
-        UBeaverBPFunctionLib::MakeRandomDirection(spawnLogParams.minAngle, spawnLogParams.maxAngle);
+    if (!GetWorld()->GetAuthGameMode()) return;
+
+    const FVector direction = UBeaverBPFunctionLib::MakeRandomDirection(spawnLogParams.minAngle, spawnLogParams.maxAngle);
+    const auto logForSpawn  = listOfLogs[GetRandIterarot()];
 
     SetRandomLocation();
 
-    if (IsValid(RandomizerOfLogs()))
+    if (IsValid(logForSpawn))
     {
-        auto newLog = GetWorld()->SpawnActor<ABeaverLog>(RandomizerOfLogs(), spawnParams.spawnerLocation, FRotator::ZeroRotator);
-
-        if (IsValid(newLog))
-        {
-            newLog->logParams.speed        = spawnLogParams.initialSpeed;
-            newLog->logParams.logDirection = direction;
-        }
-        // newLog->CustomTimeDilation  = slowdownScale;
+        auto newLog = GetWorld()->SpawnActor<ABeaverLog>(logForSpawn, spawnParams.spawnerLocation, FRotator::ZeroRotator);
+        
+        newLog->logParams.speed        = spawnLogParams.initialSpeed;
+        newLog->logParams.logDirection = direction;
+        newLog->onFinishRound.AddDynamic(Cast<ABeaverGameMode>(GetWorld()->GetAuthGameMode()), &ABeaverGameMode::FinishRound);
     }
 
     ChangeParamsOverTime();
@@ -68,38 +68,22 @@ void ALogSpawner::ChangeParamsOverTime()
 {
     spawnParams.spawnRate -= spawnParams.rateChange;
     spawnLogParams.initialSpeed += spawnLogParams.speedChange;
+
     spawnParams.spawnRate       = FMath::Clamp(spawnParams.spawnRate, 0.5f, 20);
     spawnLogParams.initialSpeed = FMath::Clamp(spawnLogParams.initialSpeed, 1, 180);
 
     GetWorldTimerManager().SetTimer(timerHandle, this, &ALogSpawner::SpawnLog, spawnParams.spawnRate, false);
 }
 
-TSubclassOf<ABeaverLog> ALogSpawner::RandomizerOfLogs()
+int32 ALogSpawner::GetRandIterarot()
 {
     int32 randIterator;
 
-    UKismetMathLibrary::RandomBoolWithWeight(spawnParams.stdChance)
-        ? randIterator = 0
-        : randIterator = FMath::RandRange(1, listOfLogs.Num() - 1);
-
-    auto logForSpawn = listOfLogs[randIterator];
-
-    return logForSpawn;
+    UKismetMathLibrary::RandomBoolWithWeight(spawnParams.stdChance) ? randIterator = 0
+                                                                    : randIterator = FMath::RandRange(1, listOfLogs.Num() - 1);
+    
+    return randIterator;
 }
-
-// FVector ALogSpawner::MakeRandomDirection()
-//{
-//     FVector direction(0.f, 0.f, -1.f);
-//     float randAngle = FMath::RandRange(spawnLogParams.minAngle, spawnLogParams.maxAngle);
-//     direction       = direction.RotateAngleAxis(randAngle, FVector(1.f, 0.f, 0.f));
-//
-//     if (FMath::RandBool())
-//     {
-//         direction.Y *= -1;
-//     }
-//
-//     return direction;
-// }
 
 void ALogSpawner::SetRandomLocation()
 {

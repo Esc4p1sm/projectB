@@ -15,7 +15,7 @@ class BEAVERREBUILD_API AGoldenBeaverLog : public ABeaverLog
     GENERATED_BODY()
 
   public:
-    void BeginPlay() override;
-    void BeaverLogSlivers() override;
+    AGoldenBeaverLog();
+    
   
 };

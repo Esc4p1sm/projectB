@@ -23,7 +23,7 @@ class BEAVERREBUILD_API AHugeBeaverLog : public ABeaverLog
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 rangeBtwnLogs;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, NoClear)
     TSubclassOf<class ABeaverLog> stdLogs;
 
     UFUNCTION()

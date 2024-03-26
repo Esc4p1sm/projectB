@@ -49,11 +49,8 @@ class BEAVERREBUILD_API APlayerBeaver : public ACharacter
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters of Beaver")
     FBeaverParameters BeaverParams;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    class USphereComponent *componentShield;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    class UStaticMeshComponent *meshShield;
+    /* Public functions*/
+    
 
   private:
     /* Private variables*/
@@ -76,19 +73,15 @@ class BEAVERREBUILD_API APlayerBeaver : public ACharacter
     UFUNCTION()
     void Climbing();
 
-    UFUNCTION()
-    void OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor, UPrimitiveComponent *OtherComp,
-                        int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
-
     void Landed(const FHitResult &Hit) override;
 
     /*Action inputs*/    
     void OnForceMoveDown();
     void OnForceWallJump();
 
-    void OnMoveRight(float value) { AddMovementInput(GetOwner()->GetActorRightVector(), value); }
+    FORCEINLINE void OnMoveRight(float value) { AddMovementInput(GetOwner()->GetActorRightVector(), value); }
 
-    void OnStartJump() { bPressedJump = true; }
+    FORCEINLINE void OnStartJump() { bPressedJump = true; }
 
-    void OnStopJump() { bPressedJump = false; }
+    FORCEINLINE void OnStopJump() { bPressedJump = false; }
 };

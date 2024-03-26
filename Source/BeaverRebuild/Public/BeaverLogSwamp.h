@@ -12,11 +12,12 @@ class BEAVERREBUILD_API ABeaverLogSwamp : public ABeaverLog
     GENERATED_BODY()
 
   public:
-    virtual void MarkAsJumped() override;
+    ABeaverLogSwamp();
 
-  protected:
-    /* Protected functions*/
-   /* void LogMove(float DeltaTime) override;*/
+    UPROPERTY(EditAnywhere,BlueprintReadWrite)
+    float swampAdditionalTime;
 
-    void BeaverLogScore() override;
+    UFUNCTION()
+    void OnComponentHit(UPrimitiveComponent *HitComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp, FVector NormalImpulse,
+                        const FHitResult &Hit);
 };

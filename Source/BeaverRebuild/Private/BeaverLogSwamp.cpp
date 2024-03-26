@@ -2,28 +2,22 @@
 
 #include "BeaverLogSwamp.h"
 #include "BeaverGameMode.h"
+#include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-//
-//void ABeaverLogSwamp::LogMove(float DeltaTime)
-//{
-//   Super::LogMove(DeltaTime);
-//}
-
-void ABeaverLogSwamp::MarkAsJumped()
+ABeaverLogSwamp::ABeaverLogSwamp()
 {
-    if (!bIsJumped)
-    {
-        bIsJumped = true;
-        Super::BeaverLogSlivers();
-        GetWorldTimerManager().SetTimer(timerHandle, this, &ABeaverLogSwamp::BeaverLogScore, 2);
-    }
+    swampAdditionalTime = 5.f;
+
+    ABeaverLogSwamp::boxComponent->OnComponentHit.AddDynamic(this, &ABeaverLogSwamp::OnComponentHit);
 }
 
-void ABeaverLogSwamp::BeaverLogScore()
+void ABeaverLogSwamp::OnComponentHit(UPrimitiveComponent *HitComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp,
+                                     FVector NormalImpulse, const FHitResult &Hit)
 {
-    //Cast<ABeaverGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->AddScore(1);
-    Cast<ABeaverGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->AddLifeTime(-10);
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("minus"));
-    Destroy();
+    if (IsValid(GetWorld()) && OtherActor->IsA(APlayerBeaver::StaticClass()))
+    {
+        StaticCast<ABeaverGameMode *>(UGameplayStatics::GetGameMode(GetWorld()))->AddLifeTime(swampAdditionalTime);
+        Destroy();
+    } 
 }

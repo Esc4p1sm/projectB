@@ -17,5 +17,5 @@ class BEAVERREBUILD_API UBeaverBPFunctionLib : public UBlueprintFunctionLibrary
   public:
 
     UFUNCTION(BlueprintCallable)
-	static FVector MakeRandomDirection(float minAngle, float maxAngle);
+    static FVector MakeRandomDirection(float minAngle, float maxAngle);
 };

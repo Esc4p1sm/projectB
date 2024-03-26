@@ -5,8 +5,10 @@
 #include "PlayerBeaver.h"
 #include "CoreMinimal.h"
 #include "LogSpawner.h"
+#include "Libs/BeaverTypes.h"
 #include "GameFramework/GameMode.h"
 #include "BeaverGameMode.generated.h"
+
 
 UCLASS()
 class BEAVERREBUILD_API ABeaverGameMode : public AGameMode
@@ -21,6 +23,8 @@ class BEAVERREBUILD_API ABeaverGameMode : public AGameMode
     virtual void AddScore(int32 scoreAmount);
 
     void AddBeaver(class APlayerBeaver *beaver);
+
+    void StartPlay() override;
 
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
     void FinishRound();
@@ -40,11 +44,19 @@ class BEAVERREBUILD_API ABeaverGameMode : public AGameMode
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner info")
     ALogSpawner* logSpawner;
 
+    FOnGameStateChangeSignature onGameStateChange;
+
+    EBeaverGameState gameState = EBeaverGameState::Waiting;
+
+    void StartGame();
+    void SetGameState(EBeaverGameState state);
+    
   protected:    
     virtual void BeginPlay() override;
-
+    bool SetPause(APlayerController *PC, FCanUnpause CanUnpauseDelegate) override;
+    bool ClearPause() override;
+    
     UPROPERTY()
     APlayerBeaver *beaverPawn;
 
-   
 };

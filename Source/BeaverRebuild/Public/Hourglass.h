@@ -6,12 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "Hourglass.generated.h"
 
+
+
 USTRUCT(BlueprintType)
 struct FHourglassParameters
 {
     GENERATED_USTRUCT_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float slowdownScale;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)

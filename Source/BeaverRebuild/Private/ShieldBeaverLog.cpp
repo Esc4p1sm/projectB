@@ -13,7 +13,7 @@ void AShieldBeaverLog::BeginPlay()
 {
     Super::BeginPlay();
 
-    ptrBeaver = Cast<APlayerBeaver>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    ptrBeaver = StaticCast<APlayerBeaver*>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 }
 
 void AShieldBeaverLog::EndPlay(const EEndPlayReason::Type EndPlayReason)

@@ -3,16 +3,41 @@
 #include "BeaverGameMode.h"
 #include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
+#include "BeaverPlayerController.h"
 
 ABeaverGameMode::ABeaverGameMode()
 {
     beaverLifeTime = 40;
     beaverScore    = 0;
+    PlayerControllerClass = ABeaverPlayerController::StaticClass();
+}
+
+void ABeaverGameMode::SetGameState(EBeaverGameState state)
+{
+    if (state == gameState) return;
+
+    gameState = state;
+
+    onGameStateChange.Broadcast(gameState);
 }
 
 void ABeaverGameMode::BeginPlay()
 {
+   
+}
+
+void ABeaverGameMode::StartPlay()
+{
+    Super::StartPlay();
+
+    SetGameState(EBeaverGameState::InProgress);
+}
+
+void ABeaverGameMode::StartGame()
+{
     GetWorldTimerManager().SetTimer(lifeTimerHandle, this, &ABeaverGameMode::DecreaseLifeTime, 1, true);
+    logSpawner->StartSpawn();
 }
 
 void ABeaverGameMode::DecreaseLifeTime()
@@ -42,4 +67,28 @@ void ABeaverGameMode::AddScore(int32 scoreAmount)
 void ABeaverGameMode::AddBeaver(APlayerBeaver *beaver)
 {
     beaverPawn = beaver;
+}
+
+bool ABeaverGameMode::SetPause(APlayerController *PC, FCanUnpause CanUnpauseDelegate)
+{
+    const bool pauseSet = Super::SetPause(PC,CanUnpauseDelegate);
+
+    if (pauseSet)
+    {
+        SetGameState(EBeaverGameState::PauseMenu);
+    }
+
+    return pauseSet;
+}
+
+bool ABeaverGameMode::ClearPause()
+{
+    const bool pauseCleared = Super::ClearPause();
+
+    if (pauseCleared)
+    {
+        SetGameState(EBeaverGameState::InProgress);
+    }
+
+    return pauseCleared;
 }

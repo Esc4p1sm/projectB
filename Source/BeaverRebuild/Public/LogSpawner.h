@@ -2,13 +2,11 @@
 
 #pragma once
 
-
 #include "BeaverLog.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-//#include "Interfaces/HourglassInteract.h"
+// #include "Interfaces/HourglassInteract.h"
 #include "LogSpawner.generated.h"
-
 
 USTRUCT(BlueprintType)
 struct FSpawnerParameters
@@ -34,9 +32,8 @@ struct FSpawnerParameters
     int32 spawnRangeRight;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 distBetweenLogs;  
+    int32 distBetweenLogs;
 };
-
 
 USTRUCT(BlueprintType)
 struct FSpawningLogParameters
@@ -56,9 +53,8 @@ struct FSpawningLogParameters
     float speedChange;
 };
 
-
 UCLASS()
-class BEAVERREBUILD_API ALogSpawner : public AActor/*, public IHourglassInteract*/
+class BEAVERREBUILD_API ALogSpawner : public AActor /*, public IHourglassInteract*/
 {
     GENERATED_BODY()
 
@@ -73,7 +69,7 @@ class BEAVERREBUILD_API ALogSpawner : public AActor/*, public IHourglassInteract
 
   public:
     /* Public variables */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objects for spawn");
+    UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = "Objects for spawn");
     TArray<TSubclassOf<class ABeaverLog>> listOfLogs;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner parameters")
@@ -94,30 +90,15 @@ class BEAVERREBUILD_API ALogSpawner : public AActor/*, public IHourglassInteract
 
   private:
     /* Private variables */
-   // UPROPERTY()
-    //float slowdownScale;
-
     UPROPERTY()
     FTimerHandle timerHandle;
 
     /* Private functions */
     void SpawnLog();
 
-   /* FVector MakeRandomDirection();*/
-
     void SetRandomLocation();
 
-    TSubclassOf<ABeaverLog> RandomizerOfLogs();
+    int32 GetRandIterarot();
 
     void ChangeParamsOverTime();
-
-    /* Getters and setters */
-    //float &GetSlowdownScale() override { return slowdownScale; }
-    /* FVector GetDireaction() override
-    {
-        return MakeRandomDirection();
-    }*/
-
-   // float &GetSpawnRate() override { return spawnParams.spawnRate; }
-
 };

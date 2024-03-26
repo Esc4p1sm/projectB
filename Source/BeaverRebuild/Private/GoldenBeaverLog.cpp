@@ -5,13 +5,7 @@
 #include "BeaverGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
-void AGoldenBeaverLog::BeginPlay()
+AGoldenBeaverLog::AGoldenBeaverLog()
 {
-    Super::BeginPlay();
-    scaleSpeed = 2.5f;
-}
-
-void AGoldenBeaverLog::BeaverLogSlivers()
-{
-    Cast<UBeaverGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))->AddSlivers(5);
+    logParams.scaleSpeed = 2.5;
 }

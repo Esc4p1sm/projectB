@@ -7,16 +7,19 @@
 #include "EngineUtils.h"
 #include "PlayerBeaver.h"
 #include "BeaverShield.h"
+#include "BeaverGameMode.h"
+
 AHourglass::AHourglass()
 {
     PrimaryActorTick.bCanEverTick = false;
     bItemPicked                   = true;
     ptrBeaver                     = nullptr;
-    hourParams.slowdownScale      = 2.f;
+    hourParams.slowdownScale      = 0.5f;
     hourParams.timeForSlow        = 9;
     hourParams.lifeTime           = 15;
-    sphereComponent               = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
-    staticMesh                    = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Hourglass"));
+
+    sphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+    staticMesh      = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Hourglass"));
 
     SetRootComponent(sphereComponent);
     staticMesh->SetupAttachment(RootComponent);
@@ -26,6 +29,8 @@ AHourglass::AHourglass()
 void AHourglass::BeginPlay()
 {
     Super::BeginPlay();
+
+    check(staticMesh);
 
     sphereComponent->SetGenerateOverlapEvents(true);
     sphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AHourglass::OnOverlapBegin);
@@ -43,10 +48,12 @@ void AHourglass::OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *Oth
 {
     ptrBeaver = Cast<APlayerBeaver>(OtherActor);
 
-    if (IsValid(ptrBeaver))
+    if (IsValid(ptrBeaver) && OtherActor->IsA(APlayerBeaver::StaticClass()))
     {
         SlowdownLogs();
+
         SetActorHiddenInGame(true);
+
         sphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         staticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }
@@ -54,20 +61,20 @@ void AHourglass::OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *Oth
 
 void AHourglass::SlowdownLogs()
 {
-    SetLifeSpan(hourParams.lifeTime / 2);
+    FTimerHandle timerHandle;
 
-    UGameplayStatics::SetGlobalTimeDilation(GetWorld(), (1 / hourParams.slowdownScale));
+    ABeaverLog::customSpeedScale = hourParams.slowdownScale;
 
-    ptrBeaver->CustomTimeDilation = (1 * hourParams.slowdownScale);
+    GetWorldTimerManager().ClearTimer(AHourglass::TimerHandle_LifeSpanExpired);
 
-    if (bItemPicked) ReturnToDefault();
+    GetWorldTimerManager().SetTimer(timerHandle, this, &AHourglass::ReturnToDefault, hourParams.timeForSlow, false);
 }
 
 void AHourglass::ReturnToDefault()
 {
-    bItemPicked              = false;
     hourParams.slowdownScale = 1;
 
-    FTimerHandle timerHandle;
-    GetWorldTimerManager().SetTimer(timerHandle, this, &AHourglass::SlowdownLogs, hourParams.timeForSlow / 2, false);
+    ABeaverLog::customSpeedScale = hourParams.slowdownScale;
+
+    Destroy();
 }

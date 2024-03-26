@@ -20,18 +20,28 @@ class BEAVERREBUILD_API UBeaverGameInstance : public UGameInstance
   public:
     /* Public variables*/
     UPROPERTY()
-    int32 slivers;
+    FName menuLevel;
 
     /* Public functions*/
     virtual void AddSlivers(int32 sliversAmount);
 
+    UFUNCTION(BlueprintCallable)
+    int GetSlivers() const { return slivers; }
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 slivers;
   private:
+
+    
     /* Private functions*/
     void OnStart() override;
     void Shutdown() override;
-
+    
     UFUNCTION()
     void LoadSlivers();
+
+    UPROPERTY()
+    class UBeaverSaveGame *saveSlot;
 
     UFUNCTION()
     void SaveSlivers();

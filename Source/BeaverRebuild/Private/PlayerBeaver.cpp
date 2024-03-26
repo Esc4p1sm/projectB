@@ -9,6 +9,11 @@
 #include "Engine/DamageEvents.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "LogSpawner.h"
+#include "BeaverPlayerController.h"
+#include "libs/BeaverTypes.h"
+
+
+
 
 // Sets default values
 APlayerBeaver::APlayerBeaver()
@@ -29,17 +34,15 @@ APlayerBeaver::APlayerBeaver()
 void APlayerBeaver::BeginPlay()
 {
     Super::BeginPlay();
-    
-    GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerBeaver::OnOverlapBegin);
+
     GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-   
+
     SetActorRotation(FRotator::ZeroRotator);
 
-    Cast<ABeaverGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->AddBeaver(this);
+    StaticCast<ABeaverGameMode*>(UGameplayStatics::GetGameMode(GetWorld()))->AddBeaver(this);
 
     FTimerHandle timerHandleClimbing;
     GetWorldTimerManager().SetTimer(timerHandleClimbing, this, &APlayerBeaver::Climbing, 0.1f, true);
-   
 }
 
 void APlayerBeaver::Tick(float DeltaTime)
@@ -52,42 +55,29 @@ void APlayerBeaver::Tick(float DeltaTime)
 void APlayerBeaver::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
-    InputComponent->BindAxis("MoveRight", this, &APlayerBeaver::OnMoveRight);
-    InputComponent->BindAction("Jump", IE_Pressed, this, &APlayerBeaver::OnStartJump);
-    InputComponent->BindAction("Jump", IE_Released, this, &APlayerBeaver::OnStopJump);
-    InputComponent->BindAction("ForceJump", IE_Pressed, this, &APlayerBeaver::OnForceWallJump);
-    InputComponent->BindAction("ForceDown", IE_Pressed, this, &APlayerBeaver::OnForceMoveDown);
-}
 
-void APlayerBeaver::OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor,
-                                   UPrimitiveComponent *OtherComp, int32 OtherBodyIndex, bool bFromSweep,
-                                   const FHitResult &SweepResult)
-{
-    ABeaverLog *beaverLog = Cast<ABeaverLog>(OtherActor);
-
-    if (IsValid(beaverLog) && OtherComp)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Beaver overlaped"));
-        Cast<ABeaverGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->FinishRound();
-        Destroy();
-    }
+    PlayerInputComponent->BindAxis("MoveRight", this, &APlayerBeaver::OnMoveRight);
+    PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &APlayerBeaver::OnStartJump);
+    PlayerInputComponent->BindAction("Jump", IE_Released, this, &APlayerBeaver::OnStopJump);
+    PlayerInputComponent->BindAction("ForceJump", IE_Pressed, this, &APlayerBeaver::OnForceWallJump);
+    PlayerInputComponent->BindAction("ForceDown", IE_Pressed, this, &APlayerBeaver::OnForceMoveDown);
 }
 
 void APlayerBeaver::MarkJumpedLogs()
 {
     const FVector traceStart = GetActorLocation();
-   const FVector traceEnd   = FVector(traceStart.X, traceStart.Y, 0.0f);
-    FHitResult hitResult;
+    const FVector traceEnd   = FVector(traceStart.X, traceStart.Y, 0.0f);
+    TArray<FHitResult> hitResults;
 
     DrawDebugLine(GetWorld(), traceStart, traceEnd, FColor::Red, false, 0, 0, 3);
+
+    GetWorld()->LineTraceMultiByChannel(hitResults, traceStart, traceEnd, ECollisionChannel::ECC_MarkLogsTraceChannel);
     
-    GetWorld()->LineTraceSingleByChannel(hitResult, traceStart, traceEnd, ECollisionChannel::ECC_GameTraceChannel1);
-    if (hitResult.bBlockingHit)
+    for (FHitResult &hitResult : hitResults)
     {
-        if (Cast<ABeaverLog>(hitResult.GetActor()))
-        {
-            Cast<ABeaverLog>(hitResult.GetActor())->MarkAsJumped();
-        }
+        auto *log = Cast<ABeaverLog>(hitResult.GetActor());
+
+        if (IsValid(log)) log->MarkAsJumped(); 
     }
 }
 
@@ -95,10 +85,10 @@ void APlayerBeaver::Climbing()
 {
     if (GetCharacterMovement()->IsFalling())
     {
-        const FVector traceStart     = GetActorLocation();
-        const FVector traceEnd = traceStart + 45 * GetActorForwardVector();
-        GetWorld()->LineTraceSingleByChannel(hitResultClimbing, traceStart, traceEnd,
-                                             ECollisionChannel::ECC_GameTraceChannel2);
+        const FVector traceStart = GetActorLocation();
+        const FVector traceEnd   = traceStart + 45 * GetActorForwardVector();
+       
+        GetWorld()->LineTraceSingleByChannel(hitResultClimbing, traceStart, traceEnd, ECollisionChannel::ECC_ClimbingTraceChannel);
         DrawDebugLine(GetWorld(), traceStart, traceEnd, FColor::Green, false, 0, 0, 3);
 
         if (hitResultClimbing.bBlockingHit && bWasOnGround)
@@ -114,7 +104,8 @@ void APlayerBeaver::Climbing()
             GetCharacterMovement()->GravityScale = 1;
             bOnWall                              = false;
 
-            if (jumpCount == 1) JumpCurrentCount = 0; 
+            if (jumpCount == 1)
+                JumpCurrentCount = 0;
         }
     }
 }
@@ -146,3 +137,4 @@ void APlayerBeaver::Landed(const FHitResult &Hit)
     bWasOnGround = true;
     jumpCount    = 0;
 }
+

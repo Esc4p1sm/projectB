@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "BeaverShield.generated.h"
 
+
 UCLASS()
 class BEAVERREBUILD_API ABeaverShield : public AActor
 {
@@ -18,14 +19,14 @@ class BEAVERREBUILD_API ABeaverShield : public AActor
     virtual void BeginPlay() override;
 
   public:
-    virtual void Tick(float DeltaTime) override;
+    void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
   public:
     /* Public variables*/
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters of Shield")
     int32 lifeTime;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters of Shield")
     float speedup;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -43,5 +44,8 @@ class BEAVERREBUILD_API ABeaverShield : public AActor
     UFUNCTION()
     void OnOverlapShieldBegin(UPrimitiveComponent *HitComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp,
                               FVector NormalImpulse, const FHitResult &Hit);
+
     void DestroyPickedShield();
+    void ChangeShieldComponentsParams();
+    void ChangeBeaverCapsuleCollision(const ECollisionResponse response);
 };

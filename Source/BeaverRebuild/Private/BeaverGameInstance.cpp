@@ -3,21 +3,33 @@
 #include "BeaverGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "SaveGame/BeaverSaveGame.h"
+#include "GameFramework/GameUserSettings.h"
 
 UBeaverGameInstance::UBeaverGameInstance()
 {
     slivers = 0;
+    menuLevel = "MenuLevel";
 }
 
 void UBeaverGameInstance::OnStart()
 {
     LoadSlivers();
+
+    if (GetWorld())
+    {
+        FLatentActionInfo actioninfo;
+        UGameplayStatics::LoadStreamLevel(GetWorld(), menuLevel, true, false, actioninfo);
+    }
+
+    //UGameUserSettings::GetGameUserSettings()->LoadSettings();
+    saveSlot = StaticCast<UBeaverSaveGame *>(UGameplayStatics::CreateSaveGameObject(UBeaverSaveGame::StaticClass()));
+    
 }
 
 void UBeaverGameInstance::Shutdown()
 {
     SaveSlivers();
-
+    UGameUserSettings::GetGameUserSettings()->SaveSettings();
     Super::Shutdown();
 }
 
@@ -29,19 +41,19 @@ void UBeaverGameInstance::AddSlivers(int32 sliversAmount)
 
 void UBeaverGameInstance::LoadSlivers()
 {
-    UBeaverSaveGame *saveSlot = Cast<UBeaverSaveGame>(UGameplayStatics::CreateSaveGameObject(UBeaverSaveGame::StaticClass()));
+    //UBeaverSaveGame *saveSlot = StaticCast<UBeaverSaveGame*>(UGameplayStatics::CreateSaveGameObject(UBeaverSaveGame::StaticClass()));
 
-    saveSlot = Cast<UBeaverSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("SaveSlot1"), 0));
+    saveSlot = StaticCast<UBeaverSaveGame*>(UGameplayStatics::LoadGameFromSlot(TEXT("SaveSlot1"), 0));
 
-    if (IsValid(saveSlot)) this->slivers = saveSlot->savedSlivers;
+    if (saveSlot) this->slivers = saveSlot->savedSlivers;
     
 }
 
 void UBeaverGameInstance::SaveSlivers()
 {
-    UBeaverSaveGame *saveSlot = Cast<UBeaverSaveGame>(UGameplayStatics::CreateSaveGameObject(UBeaverSaveGame::StaticClass()));
+    //UBeaverSaveGame *saveSlot = StaticCast<UBeaverSaveGame*>(UGameplayStatics::CreateSaveGameObject(UBeaverSaveGame::StaticClass()));
 
-    if (IsValid(saveSlot))
+    if (saveSlot)
     {
         saveSlot->savedSlivers = this->slivers;
         UGameplayStatics::SaveGameToSlot(saveSlot, TEXT("SaveSlot1"), 0);

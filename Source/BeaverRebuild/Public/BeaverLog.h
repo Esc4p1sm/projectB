@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "BeaverLog.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFinishRound);
+
 USTRUCT(BlueprintType)
 struct FLogParameters
 {
@@ -15,10 +17,25 @@ struct FLogParameters
     float speed;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float scaleSpeed;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 lifeTime;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 impactCounterMax;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 additionalSlivers;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 additionalTime;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 additionalScore;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float timeToDestruction;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     FVector logDirection;
@@ -50,7 +67,9 @@ class BEAVERREBUILD_API ABeaverLog : public AActor
     bool bIsJumped;
 
     UPROPERTY()
-    float scaleSpeed;
+    FOnFinishRound onFinishRound;
+
+    static float customSpeedScale;
 
     /* Public functions*/
     UFUNCTION()
@@ -70,6 +89,10 @@ class BEAVERREBUILD_API ABeaverLog : public AActor
     /* Protected functions*/
     UFUNCTION()
     virtual void LogMove(float DeltaTime);
+
+    UFUNCTION()
+    virtual void OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor, UPrimitiveComponent *OtherComp,
+                                int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
 
     UFUNCTION()
     virtual void BeaverLogScore();
