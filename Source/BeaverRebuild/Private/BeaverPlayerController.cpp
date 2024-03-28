@@ -28,7 +28,7 @@ void ABeaverPlayerController::BeginPlay()
 void ABeaverPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
-
+    
     if (!InputComponent)
         return;
 
@@ -56,6 +56,7 @@ void ABeaverPlayerController::OnPauseGame()
     if (!bGameIsPause)
     {
         GetWorld()->GetAuthGameMode()->SetPause(this);
+
         ChangeMenuNavigation();
 
         bGameIsPause                                           = true;
@@ -66,39 +67,6 @@ void ABeaverPlayerController::OnPauseGame()
         GetWorld()->GetAuthGameMode()->ClearPause();
         bGameIsPause = false;
     }
-
-    // if (GetWorld() && GetWorld()->GetAuthGameMode())
-    //{
-    //     if (!bGameIsPause)
-    //     {
-    //         ChangeMenuNavigation();
-    //         mainMenuWidget = CreateWidget<UUserWidget>(GetWorld(),mainMenuUW);
-    //         mainMenuWidget->AddToViewport();
-    //         // playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-
-    //        checkf(mainMenuUW, TEXT("Main Menu widget was nullptr"));
-
-    //        GetWorld()->GetAuthGameMode()->SetPause(this);
-    //
-    //        SetInputMode(FInputModeGameAndUI());
-
-    //        InputComponent->GetActionBinding(0).bExecuteWhenPaused      = true;
-    //        bGameIsPause                                                = true;
-    //        bShowMouseCursor = true;
-    //    }
-    //    else if (bGameIsPause)
-    //    {
-    //        GetWorld()->GetAuthGameMode()->ClearPause();
-
-    //        //if (IsValid(optionsMenuUW)) optionsMenuUW->RemoveFromViewport();
-
-    //        mainMenuWidget->RemoveFromViewport();
-
-    //        bGameIsPause                                                = false;
-    //        bShowMouseCursor = false;
-    //        SetInputMode(FInputModeGameOnly());
-    //    }
-    //}
 }
 
 void ABeaverPlayerController::ChangeMenuNavigation()

@@ -16,7 +16,7 @@ ABeaverGameMode::ABeaverGameMode()
 void ABeaverGameMode::SetGameState(EBeaverGameState state)
 {
     if (state == gameState) return;
-
+    
     gameState = state;
 
     onGameStateChange.Broadcast(gameState);

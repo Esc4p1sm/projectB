@@ -23,7 +23,4 @@ void UOptionsMenuWidget::OnBackToMenu()
 
     ABeaverGameMode *gameMode = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
     gameMode->SetGameState(EBeaverGameState::PauseMenu);
-    /*auto options = CreateWidget<UUserWidget>(GetWorld(), mainMenuWidgetClass);
-    this->RemoveFromViewport();
-    options->AddToViewport();*/
 }

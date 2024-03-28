@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
+#include "Libs/BeaverTypes.h"
 #include "Components/TimelineComponent.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -23,23 +24,30 @@ class BEAVERREBUILD_API AWardrobeTrigger : public AActor
     // Called every frame
     virtual void Tick(float DeltaTime) override;
 
+  public:
+    UPROPERTY(EditAnywhere)
+    float customBlendTime;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     class USphereComponent *triggerSphere;
 
+    UPROPERTY(EditAnywhere)
+    AActor *cameraPlayerWardrobe = nullptr;
+
+    UPROPERTY(EditAnywhere)
+    AActor *cameraPlayerInGame = nullptr;
+
+    UPROPERTY(EditAnywhere)
+    UCurveFloat *curveFloat = nullptr;
+
+    bool bIsInWardrobe;
     
-
-    UPROPERTY(EditAnywhere)
-    AActor *cameraPlayerWardrobe;
-
+    void OnReturnPlayerToGame(EBeaverGameState state);
+  private:
+    TWeakObjectPtr<class APlayerBeaver> beaver;
+    
     UPROPERTY()
-    UTimelineComponent *timelineComp;
-
-    UPROPERTY(EditAnywhere)
-    UCurveFloat *curveFloat;
-
-    FOnTimelineFloat UpdateFunctionFloat;
-
-    class APlayerBeaver* beaver;
+    UTimelineComponent *timeLineComponent;
 
     UFUNCTION()
     void UpdateTimelineComp(float alpha);
@@ -47,8 +55,5 @@ class BEAVERREBUILD_API AWardrobeTrigger : public AActor
     UFUNCTION()
     void OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor, UPrimitiveComponent *OtherComp, int32 OtherBodyIndex,
                         bool bFromSweep, const FHitResult &SweepResult);
-
-    UFUNCTION()
-    void OnOverlapEnd(UPrimitiveComponent *OverlappedComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp, 
-                      int32 OtherBodyIndex);
+    
 };

@@ -19,10 +19,14 @@ class BEAVERREBUILD_API ABeaverPlayerController : public APlayerController
     ABeaverPlayerController();
     
     void BeginPlay() override;
-  
+
+  public:
+    void ChangeMenuNavigation();
+
+  private:
     bool bGameIsPause;
     void SetupInputComponent() override;
     void OnPauseGame();
     void OnGameStateChanged(EBeaverGameState state);
-    void ChangeMenuNavigation();
+    
 };
