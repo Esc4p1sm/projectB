@@ -1,1 +1,1 @@
-The sample code is from a project I'm working on, so it's far from the final version and it's constantly being refined and changed.
+The content is missing for the reason that the rights to it do not belong to me. This is just a demonstration of the code of a future project. :)
