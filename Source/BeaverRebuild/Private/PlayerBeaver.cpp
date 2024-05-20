@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerBeaver.h"
+#include "BeaverGameInstance.h"
 #include "BeaverGameMode.h"
 #include "BeaverLog.h"
 #include "Components/CapsuleComponent.h"
@@ -11,24 +12,14 @@
 #include "LogSpawner.h"
 #include "BeaverPlayerController.h"
 #include "libs/BeaverTypes.h"
+#include "Sound/SoundCue.h"
+#include "DynamiteComponent.h"
 
-
-
-
-// Sets default values
 APlayerBeaver::APlayerBeaver()
 {
-    // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need
-    // it.
-    PrimaryActorTick.bCanEverTick       = true;
-    bOnWall                             = false;
-    bWasOnGround                        = true;
-    BeaverParams.beaverLocationForSpawn = FVector{50.0f, 0.0f, 10.0f};
-    BeaverParams.traceMaxDistance       = 150.f;
-    BeaverParams.slidingSpeed           = -20.f;
-    BeaverParams.forceJumpScale         = 700;
-    BeaverParams.forceDownScale         = 1000;
-    jumpCount                           = 0;
+    PrimaryActorTick.bCanEverTick = true;
+    HatMesh                       = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Hat Mesh"));
+    DynamiteComponent             = CreateDefaultSubobject<UDynamiteComponent>(TEXT("Dynamite Component"));
 }
 
 void APlayerBeaver::BeginPlay()
@@ -39,20 +30,32 @@ void APlayerBeaver::BeginPlay()
 
     SetActorRotation(FRotator::ZeroRotator);
 
-    StaticCast<ABeaverGameMode*>(UGameplayStatics::GetGameMode(GetWorld()))->AddBeaver(this);
+    const auto GameMode = StaticCast<ABeaverGameMode*>(UGameplayStatics::GetGameMode(GetWorld()));
 
-    FTimerHandle timerHandleClimbing;
-    GetWorldTimerManager().SetTimer(timerHandleClimbing, this, &APlayerBeaver::Climbing, 0.1f, true);
+    if (GameMode)
+    {
+        GameMode->AddBeaver(this);
+    }
+
+    FTimerHandle TimerHandleClimbing;
+    GetWorldTimerManager().SetTimer(TimerHandleClimbing, this, &APlayerBeaver::Climbing, 0.1f, true);
+
+    const auto GameInstance = StaticCast<UBeaverGameInstance*>(GetWorld()->GetGameInstance());
+
+    if (GameInstance)
+    {
+        GameInstance->linkBeaver(this);
+    }
 }
 
 void APlayerBeaver::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
     MarkJumpedLogs();
 }
 
-// Called to bind functionality to input
-void APlayerBeaver::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
+void APlayerBeaver::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
@@ -65,47 +68,63 @@ void APlayerBeaver::SetupPlayerInputComponent(UInputComponent *PlayerInputCompon
 
 void APlayerBeaver::MarkJumpedLogs()
 {
-    const FVector traceStart = GetActorLocation();
-    const FVector traceEnd   = FVector(traceStart.X, traceStart.Y, 0.0f);
-    TArray<FHitResult> hitResults;
+    const FVector TraceStart = GetActorLocation();
+    const FVector TraceEnd   = FVector(TraceStart.X, TraceStart.Y, 0.0f);
 
-    DrawDebugLine(GetWorld(), traceStart, traceEnd, FColor::Red, false, 0, 0, 3);
+    TArray<FHitResult> HitResults;
 
-    GetWorld()->LineTraceMultiByChannel(hitResults, traceStart, traceEnd, ECollisionChannel::ECC_MarkLogsTraceChannel);
-    
-    for (FHitResult &hitResult : hitResults)
+    DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 0, 0, 3);
+
+    GetWorld()->LineTraceMultiByChannel(HitResults, TraceStart, TraceEnd, ECollisionChannel::ECC_MARK_LOGS_TRACE_CHANNEL);
+
+    for (FHitResult& HitResult : HitResults)
     {
-        auto *log = Cast<ABeaverLog>(hitResult.GetActor());
+        const auto Log = Cast<ABeaverLog>(HitResult.GetActor());
 
-        if (IsValid(log)) log->MarkAsJumped(); 
+        if (IsValid(Log))
+        {
+            if (!Log->bIsJumped)
+            {
+                DynamiteComponent->SpawnDynamite(Log);
+            }
+
+            Log->MarkAsJumped();
+        }
     }
 }
 
 void APlayerBeaver::Climbing()
 {
-    if (GetCharacterMovement()->IsFalling())
+    if (GetCharacterMovement()->IsFalling()) //(beaverState & BeaverState::isJumped)//
     {
-        const FVector traceStart = GetActorLocation();
-        const FVector traceEnd   = traceStart + 45 * GetActorForwardVector();
-       
-        GetWorld()->LineTraceSingleByChannel(hitResultClimbing, traceStart, traceEnd, ECollisionChannel::ECC_ClimbingTraceChannel);
-        DrawDebugLine(GetWorld(), traceStart, traceEnd, FColor::Green, false, 0, 0, 3);
+        const FVector TraceStart = GetActorLocation();
+        const FVector TraceEnd   = TraceStart + 45 * GetActorForwardVector();
 
-        if (hitResultClimbing.bBlockingHit && bWasOnGround)
+        GetWorld()->LineTraceSingleByChannel(HitResultClimbing, TraceStart, TraceEnd, ECollisionChannel::ECC_CLIMBING_TRACE_CHANEL);
+        DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, 0, 0, 3);
+
+        if (HitResultClimbing.bBlockingHit && bWasOnGround)
         {
             bOnWall                              = true;
             bWasOnGround                         = false;
+            BeaverState                          = BeaverState::isClimbing;
             GetCharacterMovement()->GravityScale = 0;
-            GetCharacterMovement()->Velocity.Z   = BeaverParams.slidingSpeed;
-            jumpCount                            = JumpCurrentCount;
+            GetCharacterMovement()->Velocity.Z   = BeaverParams.SlidingSpeed;
+            JumpCount                            = JumpCurrentCount;
+
+            OnBeaverStateChanged.Broadcast(BeaverState::isClimbing);
         }
-        else if (!hitResultClimbing.bBlockingHit && bOnWall)
+        else if (!HitResultClimbing.bBlockingHit && bOnWall) //(beaverState & BeaverState::isJumped)
         {
             GetCharacterMovement()->GravityScale = 1;
             bOnWall                              = false;
 
-            if (jumpCount == 1)
+            OnBeaverStateChanged.Broadcast(BeaverState::isJumped);
+
+            if (JumpCount == 1)
+            {
                 JumpCurrentCount = 0;
+            }
         }
     }
 }
@@ -114,11 +133,24 @@ void APlayerBeaver::OnForceWallJump()
 {
     if (bOnWall)
     {
-        const FVector launchDirection = {0, -GetActorForwardVector().Y, 1};
-        const FRotator launchRotation = {0, -GetActorRotation().Yaw, 0};
+        const FVector LaunchDirection = {0, -GetActorForwardVector().Y, 1};
+        const FRotator LaunchRotation = {0, -GetActorRotation().Yaw, 0};
 
-        LaunchCharacter(launchDirection * BeaverParams.forceJumpScale, true, true);
-        SetActorRotation(launchRotation);
+        if (JumpFromWallAnimMontage)
+        {
+            PlayAnimMontage(JumpFromWallAnimMontage);
+        }
+
+        if (ReboundSound)
+        {
+            UGameplayStatics::PlaySoundAtLocation(GetWorld(), ReboundSound, GetActorLocation());
+        }
+
+        LaunchCharacter(LaunchDirection * BeaverParams.ForceJumpScale, true, true);
+
+        SetActorRotation(LaunchRotation);
+
+        OnBeaverStateChanged.Broadcast(BeaverState::isLaunched);
     }
 }
 
@@ -126,15 +158,63 @@ void APlayerBeaver::OnForceMoveDown()
 {
     if (GetCharacterMovement()->IsFalling() && !bOnWall)
     {
-        LaunchCharacter(-GetActorUpVector() * BeaverParams.forceDownScale, false, false);
+        PlayAnimMontage(TouchdownAnimMontage);
+
+        LaunchCharacter(-GetActorUpVector() * BeaverParams.ForceDownScale, false, false);
+        OnBeaverStateChanged.Broadcast(BeaverState::isFastLanding);
     }
 }
 
-void APlayerBeaver::Landed(const FHitResult &Hit)
+void APlayerBeaver::Landed(const FHitResult& Hit)
 {
     Super::Landed(Hit);
 
+    if (FallSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(GetWorld(), FallSound, GetActorLocation());
+    }
+
     bWasOnGround = true;
-    jumpCount    = 0;
+    JumpCount    = 0;
+    OnBeaverStateChanged.Broadcast(BeaverState::isLanded);
 }
 
+void APlayerBeaver::OnMoveRight(float Value)
+{
+    AddMovementInput(GetOwner()->GetActorRightVector(), Value);
+}
+
+void APlayerBeaver::OnStartJump()
+{
+    if (JumpSound && !bOnWall && !GetCharacterMovement()->IsFalling())
+    {
+        UGameplayStatics::PlaySoundAtLocation(GetWorld(), JumpSound, GetActorLocation());
+    }
+
+    bPressedJump = true;
+}
+
+void APlayerBeaver::OnStopJump()
+{
+    bPressedJump = false;
+}
+
+void APlayerBeaver::SetBeaverHat(UStaticMesh* const StaticMesh)
+{
+    if (StaticMesh)
+    {
+        FAttachmentTransformRules AttachmentTransformRules(EAttachmentRule::SnapToTarget, false);
+
+        HatMesh->SetStaticMesh(StaticMesh);
+        HatMesh->RegisterComponent();
+        HatMesh->AttachToComponent(GetMesh(), AttachmentTransformRules, "HatSocket");
+    }
+}
+
+void APlayerBeaver::SetBeaverSkin(USkeletalMesh* const SkeletalMesh)
+{
+    if (SkeletalMesh)
+    {
+        GetMesh()->SetSkeletalMesh(SkeletalMesh);
+    }
+}

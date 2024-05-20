@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "ShieldBeaverLog.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerBeaver.h"
@@ -13,14 +12,17 @@ void AShieldBeaverLog::BeginPlay()
 {
     Super::BeginPlay();
 
-    ptrBeaver = StaticCast<APlayerBeaver*>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    LogParams.TypeOfLog = ELogType ::TarLog;
+
+    PlayerBeaver = StaticCast<APlayerBeaver*>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 }
 
 void AShieldBeaverLog::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
 
-    if (bIsJumped) GetWorld()->SpawnActor<ABeaverShield>(shield);     
+    if (bIsJumped)
+    {
+        GetWorld()->SpawnActor<ABeaverShield>(Shield);
+    }
 }
-
-

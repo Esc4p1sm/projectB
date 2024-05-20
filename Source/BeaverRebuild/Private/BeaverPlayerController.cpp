@@ -7,7 +7,7 @@
 
 ABeaverPlayerController::ABeaverPlayerController()
 {
-    bGameIsPause = false;
+    
 }
 
 void ABeaverPlayerController::BeginPlay()
@@ -16,11 +16,11 @@ void ABeaverPlayerController::BeginPlay()
 
     if (GetWorld())
     {
-        ABeaverGameMode *gameMode = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
+        ABeaverGameMode* GameMode = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
 
-        if (IsValid(gameMode))
+        if (GameMode)
         {
-            gameMode->onGameStateChange.AddUObject(this, &ABeaverPlayerController::OnGameStateChanged);
+            GameMode->OnGameStateChange.AddUObject(this, &ABeaverPlayerController::OnGameStateChanged);
         }
     }
 }
@@ -28,16 +28,18 @@ void ABeaverPlayerController::BeginPlay()
 void ABeaverPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
-    
+
     if (!InputComponent)
+    {
         return;
+    }
 
     InputComponent->BindAction("MainMenu", IE_Pressed, this, &ABeaverPlayerController::OnPauseGame);
 }
 
-void ABeaverPlayerController::OnGameStateChanged(EBeaverGameState state)
+void ABeaverPlayerController::OnGameStateChanged(EBeaverGameState State)
 {
-    if (state == EBeaverGameState::InProgress)
+    if (State == EBeaverGameState::InProgress)
     {
         bShowMouseCursor = false;
         SetInputMode(FInputModeGameOnly());
@@ -45,19 +47,21 @@ void ABeaverPlayerController::OnGameStateChanged(EBeaverGameState state)
     else
     {
         bShowMouseCursor = true;
-        SetInputMode(FInputModeGameAndUI());
+        SetInputMode(FInputModeUIOnly());
+        ChangeMenuNavigation();
     }
 }
 
 void ABeaverPlayerController::OnPauseGame()
 {
-    if (!GetWorld() || !GetWorld()->GetAuthGameMode()) return;
+    if (!GetWorld() || !GetWorld()->GetAuthGameMode())
+    {
+        return;
+    }
 
     if (!bGameIsPause)
     {
         GetWorld()->GetAuthGameMode()->SetPause(this);
-
-        ChangeMenuNavigation();
 
         bGameIsPause                                           = true;
         InputComponent->GetActionBinding(0).bExecuteWhenPaused = true;

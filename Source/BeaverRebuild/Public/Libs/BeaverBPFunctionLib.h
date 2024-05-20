@@ -7,15 +7,26 @@
 #include "BeaverBPFunctionLib.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class BEAVERREBUILD_API UBeaverBPFunctionLib : public UBlueprintFunctionLibrary
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
   public:
+    UFUNCTION(BlueprintCallable)
+    static FVector MakeRandomDirection(float MinAngle, float MaxAngle);
 
     UFUNCTION(BlueprintCallable)
-    static FVector MakeRandomDirection(float minAngle, float maxAngle);
+    static void SetVolumeGameplaySound(class USoundClass* GameplaySoundClass, float Volume);
+
+    UFUNCTION(BlueprintCallable)
+    static void SetVolumeGameMusic(USoundClass* GameMusicSoundClass, float Volume);
+
+    UFUNCTION(BlueprintCallable)
+    static float GetVolumeGameMusic(USoundClass* GameMusicSoundClass);
+
+    UFUNCTION(BlueprintCallable)
+    static float GetVolumeGameplaySound(USoundClass* GameplaySoundClass);
 };

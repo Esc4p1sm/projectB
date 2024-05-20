@@ -9,53 +9,54 @@
 UCLASS()
 class BEAVERREBUILD_API ALevelStreamerActor : public AActor
 {
-	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	ALevelStreamerActor();
+    GENERATED_BODY()
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+  public:
+    // Sets default values for this actor's properties
+    ALevelStreamerActor();
 
-public:	
-	// Called every frame
-	//virtual void Tick(float DeltaTime) override;
+  protected:
+    // Called when the game starts or when spawned
+    virtual void BeginPlay() override;
 
-	public:
-    UPROPERTY(EditAnywhere,BlueprintReadWrite)
-    class UBoxComponent *triggerBox;
+  public:
+    // Called every frame
+    // virtual void Tick(float DeltaTime) override;
+
+  public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    class UBoxComponent* TriggerBox;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-     float customBlendTime;
+    float CustomBlendTime = 1.f;
 
-	UPROPERTY()
-    FName gameLevel;
-
-    UPROPERTY(EditAnywhere,BlueprintReadWrite)
-    float timeBeforeStartGame;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float TimeBeforeStartGame = 5.f;
 
     UPROPERTY()
-    FName menuLevel;
+    FName MenuLevel = "MenuLevel";
 
     UPROPERTY()
-    APlayerController *playerController=nullptr;
+    APlayerController* PlayerController = nullptr;
 
     UPROPERTY(EditAnywhere)
-    AActor *cameraPlayerMenu;
+    AActor* CameraPlayerMenu;
 
     UPROPERTY(EditAnywhere)
-    AActor *cameraPlayerInGame;
+    AActor* CameraPlayerInGame;
+
+    UPROPERTY(EditDefaultsOnly)
+    TMap<FName, class USoundCue*> GameSound;
+
+    TWeakObjectPtr<class UBeaverGameInstance> GameInstance;
 
     void StartTimerBeforeGameStarts();
-    void ChangeCurrentLevel(const FName &levelName);
+    void ChangeCurrentLevel(const FName& LevelName);
 
     UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32
-                        OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+    void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+                        bool bFromSweep, const FHitResult& SweepResult);
 
     UFUNCTION()
-    void OnOverlapEnd(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32
-                      OtherBodyIndex);
+    void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };

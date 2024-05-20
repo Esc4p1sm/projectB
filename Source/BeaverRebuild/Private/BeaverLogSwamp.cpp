@@ -2,14 +2,15 @@
 
 #include "BeaverLogSwamp.h"
 #include "BeaverGameMode.h"
-#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 ABeaverLogSwamp::ABeaverLogSwamp()
 {
-    swampAdditionalTime = 5.f;
+    SwampAdditionalTime = 5.f;
 
-    ABeaverLogSwamp::boxComponent->OnComponentHit.AddDynamic(this, &ABeaverLogSwamp::OnComponentHit);
+    ABeaverLogSwamp::CapsuleComponent->OnComponentHit.AddDynamic(this, &ABeaverLogSwamp::OnComponentHit);
+    LogParams.TypeOfLog = ELogType::SwampLog;
 }
 
 void ABeaverLogSwamp::OnComponentHit(UPrimitiveComponent *HitComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp,
@@ -17,7 +18,7 @@ void ABeaverLogSwamp::OnComponentHit(UPrimitiveComponent *HitComponent, AActor *
 {
     if (IsValid(GetWorld()) && OtherActor->IsA(APlayerBeaver::StaticClass()))
     {
-        StaticCast<ABeaverGameMode *>(UGameplayStatics::GetGameMode(GetWorld()))->AddLifeTime(swampAdditionalTime);
+        StaticCast<ABeaverGameMode *>(UGameplayStatics::GetGameMode(GetWorld()))->AddLifeTime(SwampAdditionalTime);
         Destroy();
     } 
 }

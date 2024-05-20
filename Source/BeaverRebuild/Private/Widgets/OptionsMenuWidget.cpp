@@ -1,26 +1,31 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Widgets/OptionsMenuWidget.h"
 #include "Components/Button.h"
 #include "BeaverGameMode.h"
+#include "BeaverPlayerController.h"
 
 bool UOptionsMenuWidget::Initialize()
 {
-    const bool initStatus = Super::Initialize();
+    const bool InitStatus = Super::Initialize();
 
-    if (initStatus)
-    { 
-        backToMenuButton->OnClicked.AddDynamic(this,&UOptionsMenuWidget::OnBackToMenu);
+    if (InitStatus)
+    {
+        BackToMenuButton->OnClicked.AddDynamic(this, &UOptionsMenuWidget::OnBackToMenu);
+        this->SetIsFocusable(true);
     }
 
-    return initStatus;
+    return InitStatus;
 }
 
 void UOptionsMenuWidget::OnBackToMenu()
 {
-    if (!GetWorld() || !GetWorld()->GetAuthGameMode()) return;
+    if (!GetWorld() || !GetWorld()->GetAuthGameMode())
+    {
+        return;
+    }
 
-    ABeaverGameMode *gameMode = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
-    gameMode->SetGameState(EBeaverGameState::PauseMenu);
+    ABeaverGameMode* GameMode = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
+
+    GameMode->SetGameState(EBeaverGameState::PauseMenu);
 }

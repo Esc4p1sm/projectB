@@ -12,30 +12,24 @@
 AHourglass::AHourglass()
 {
     PrimaryActorTick.bCanEverTick = false;
-    bItemPicked                   = true;
-    ptrBeaver                     = nullptr;
-    hourParams.slowdownScale      = 0.5f;
-    hourParams.timeForSlow        = 9;
-    hourParams.lifeTime           = 15;
 
-    sphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
-    staticMesh      = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Hourglass"));
+    SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+    StaticMesh      = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Hourglass"));
 
-    SetRootComponent(sphereComponent);
-    staticMesh->SetupAttachment(RootComponent);
-    sphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    SetRootComponent(SphereComponent);
+
+    StaticMesh->SetupAttachment(RootComponent);
+    SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void AHourglass::BeginPlay()
 {
     Super::BeginPlay();
 
-    check(staticMesh);
+    SphereComponent->SetGenerateOverlapEvents(true);
+    SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AHourglass::OnOverlapBegin);
 
-    sphereComponent->SetGenerateOverlapEvents(true);
-    sphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AHourglass::OnOverlapBegin);
-
-    SetLifeSpan(hourParams.lifeTime);
+    SetLifeSpan(HourParams.LifeTime);
 }
 
 void AHourglass::Tick(float DeltaTime)
@@ -43,19 +37,19 @@ void AHourglass::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-void AHourglass::OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor, UPrimitiveComponent *OtherComp,
-                                int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult)
+void AHourglass::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+                                int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    ptrBeaver = Cast<APlayerBeaver>(OtherActor);
+    PlayerBeaver = Cast<APlayerBeaver>(OtherActor);
 
-    if (IsValid(ptrBeaver) && OtherActor->IsA(APlayerBeaver::StaticClass()))
+    if (IsValid(PlayerBeaver) && OtherActor->IsA(APlayerBeaver::StaticClass()))
     {
         SlowdownLogs();
 
         SetActorHiddenInGame(true);
 
-        sphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        staticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        StaticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }
 }
 
@@ -63,18 +57,18 @@ void AHourglass::SlowdownLogs()
 {
     FTimerHandle timerHandle;
 
-    ABeaverLog::customSpeedScale = hourParams.slowdownScale;
+    ABeaverLog::CustomSpeedScale = HourParams.SlowdownScale;
 
     GetWorldTimerManager().ClearTimer(AHourglass::TimerHandle_LifeSpanExpired);
 
-    GetWorldTimerManager().SetTimer(timerHandle, this, &AHourglass::ReturnToDefault, hourParams.timeForSlow, false);
+    GetWorldTimerManager().SetTimer(timerHandle, this, &AHourglass::ReturnToDefault, HourParams.timeForSlow, false);
 }
 
 void AHourglass::ReturnToDefault()
 {
-    hourParams.slowdownScale = 1;
+    HourParams.SlowdownScale = 1;
 
-    ABeaverLog::customSpeedScale = hourParams.slowdownScale;
+    ABeaverLog::CustomSpeedScale = HourParams.SlowdownScale;
 
     Destroy();
 }

@@ -14,10 +14,10 @@ class BEAVERREBUILD_API ABeaverLogSwamp : public ABeaverLog
   public:
     ABeaverLogSwamp();
 
-    UPROPERTY(EditAnywhere,BlueprintReadWrite)
-    float swampAdditionalTime;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float SwampAdditionalTime = 5.f;
 
     UFUNCTION()
-    void OnComponentHit(UPrimitiveComponent *HitComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp, FVector NormalImpulse,
-                        const FHitResult &Hit);
+    void OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse,
+                        const FHitResult& Hit);
 };

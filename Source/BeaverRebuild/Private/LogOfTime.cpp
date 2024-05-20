@@ -5,9 +5,14 @@
 #include "Kismet/GameplayStatics.h"
 #include "Hourglass.h"
 
+ALogOfTime::ALogOfTime()
+{
+    LogParams.TypeOfLog = ELogType::ClockedLog;
+}
+
 void ALogOfTime::SpawnHourglass()
 {
-    GetWorld()->SpawnActor<AHourglass>(hourglass, GetActorLocation(), FRotator::ZeroRotator);
+    GetWorld()->SpawnActor<AHourglass>(Hourglass, GetActorLocation(), FRotator::ZeroRotator);
 }
 
 void ALogOfTime::EndPlay(const EEndPlayReason::Type EndPlayReason)

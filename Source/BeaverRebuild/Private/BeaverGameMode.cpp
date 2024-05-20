@@ -5,90 +5,126 @@
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
 #include "BeaverPlayerController.h"
+#include "Widgets/WardrobeTrigger.h"
+#include "Sound/SoundCue.h"
+#include "Components/AudioComponent.h"
 
 ABeaverGameMode::ABeaverGameMode()
 {
-    beaverLifeTime = 40;
-    beaverScore    = 0;
     PlayerControllerClass = ABeaverPlayerController::StaticClass();
+    AudioComponent        = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioCmoponent"));
 }
 
-void ABeaverGameMode::SetGameState(EBeaverGameState state)
+void ABeaverGameMode::SetGameState(EBeaverGameState State)
 {
-    if (state == gameState) return;
-    
-    gameState = state;
+    if (State == GameState)
+    {
+        return;
+    }
 
-    onGameStateChange.Broadcast(gameState);
+    GameState = State;
+
+    if (OnGameStateChange.IsBound())
+    {
+        OnGameStateChange.Broadcast(GameState);
+    }
 }
 
 void ABeaverGameMode::BeginPlay()
 {
-   
+    Super::BeginPlay();
 }
 
 void ABeaverGameMode::StartPlay()
 {
     Super::StartPlay();
 
+    if (MenuSoundCue)
+    {
+        SetCurrentGameMusic(MenuSoundCue);
+    }
+
+    if (AudioComponent)
+    {
+        AudioComponent->Play();
+    }
+
     SetGameState(EBeaverGameState::InProgress);
 }
 
 void ABeaverGameMode::StartGame()
 {
-    GetWorldTimerManager().SetTimer(lifeTimerHandle, this, &ABeaverGameMode::DecreaseLifeTime, 1, true);
-    logSpawner->StartSpawn();
+    GetWorldTimerManager().SetTimer(LifeTimerHandle, this, &ABeaverGameMode::DecreaseLifeTime, 1, true);
+
+    LogSpawner->StartSpawn();
 }
 
 void ABeaverGameMode::DecreaseLifeTime()
 {
-    --beaverLifeTime;
-    GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("Game Timer: %lld"), beaverLifeTime));
-    if (beaverLifeTime <= 0)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Beaver is expired"));
+    --BeaverLifeTime;
+    // GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("Game Timer: %lld"), beaverLifeTime));
+    OnLifeTimerUpdated.Broadcast(BeaverLifeTime);
 
+    if (BeaverLifeTime <= 0)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Time out"));
+        LifeTimerHandle.Invalidate();
         FinishRound();
     }
 }
 
 void ABeaverGameMode::AddLifeTime(int32 additionalTime)
 {
-    beaverLifeTime += additionalTime;
+    BeaverLifeTime += additionalTime;
     GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("Added Time: %lld"), additionalTime));
+    OnLifeTimerUpdated.Broadcast(BeaverLifeTime);
 }
 
 void ABeaverGameMode::AddScore(int32 scoreAmount)
 {
-    beaverScore += scoreAmount;
-    GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("Score: %lld"), beaverScore));
+    BeaverScore += scoreAmount;
+    // GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("Score: %lld"), beaverScore));
+    OnScoreUpdated.Broadcast(BeaverScore);
 }
 
-void ABeaverGameMode::AddBeaver(APlayerBeaver *beaver)
+void ABeaverGameMode::AddBeaver(APlayerBeaver* Beaver)
 {
-    beaverPawn = beaver;
+    BeaverPawn = Beaver;
 }
 
-bool ABeaverGameMode::SetPause(APlayerController *PC, FCanUnpause CanUnpauseDelegate)
+bool ABeaverGameMode::SetPause(APlayerController* PC, FCanUnpause CanUnpauseDelegate)
 {
-    const bool pauseSet = Super::SetPause(PC,CanUnpauseDelegate);
+    const bool PauseSet = Super::SetPause(PC, CanUnpauseDelegate);
 
-    if (pauseSet)
+    if (PauseSet)
     {
         SetGameState(EBeaverGameState::PauseMenu);
     }
 
-    return pauseSet;
+    return PauseSet;
 }
 
 bool ABeaverGameMode::ClearPause()
 {
     const bool pauseCleared = Super::ClearPause();
 
-    if (pauseCleared)
+    if (pauseCleared && WardrobeTrigger->bIsInWardrobe)
+    {
+        SetGameState(EBeaverGameState::WardrobeMenu);
+    }
+
+    if (pauseCleared && !WardrobeTrigger->bIsInWardrobe)
     {
         SetGameState(EBeaverGameState::InProgress);
     }
 
     return pauseCleared;
+}
+
+void ABeaverGameMode::SetCurrentGameMusic(USoundCue* SoundCue)
+{
+    if (AudioComponent)
+    {
+        AudioComponent->SetSound(SoundCue);
+    }
 }

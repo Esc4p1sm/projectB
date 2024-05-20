@@ -13,47 +13,50 @@ class BEAVERREBUILD_API AWardrobeTrigger : public AActor
     GENERATED_BODY()
 
   public:
-    // Sets default values for this actor's properties
     AWardrobeTrigger();
 
   protected:
-    // Called when the game starts or when spawned
     virtual void BeginPlay() override;
 
   public:
-    // Called every frame
-    virtual void Tick(float DeltaTime) override;
-
-  public:
     UPROPERTY(EditAnywhere)
-    float customBlendTime;
+    float CustomBlendTime = 3.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    class USphereComponent *triggerSphere;
+    class UBoxComponent* TriggerBox;
 
     UPROPERTY(EditAnywhere)
-    AActor *cameraPlayerWardrobe = nullptr;
+    AActor* CameraPlayerWardrobe = nullptr;
 
     UPROPERTY(EditAnywhere)
-    AActor *cameraPlayerInGame = nullptr;
+    AActor* CameraPlayerInGame = nullptr;
 
     UPROPERTY(EditAnywhere)
-    UCurveFloat *curveFloat = nullptr;
+    UCurveFloat* CurveFloat = nullptr;
 
-    bool bIsInWardrobe;
-    
-    void OnReturnPlayerToGame(EBeaverGameState state);
+    bool bIsInWardrobe = false;
+
+    void OnReturnPlayerToGame();
+
   private:
-    TWeakObjectPtr<class APlayerBeaver> beaver;
-    
+    const float BeaverVelocityMin = 550.f;
+    const float BeaverVelocityMax = 600.f;
+
+    TWeakObjectPtr<class APlayerBeaver> Beaver;
+
+    TWeakObjectPtr<class ABeaverGameMode> GameMode;
+
+    TWeakObjectPtr<class ABeaverPlayerController> PlayerController;
+
     UPROPERTY()
-    UTimelineComponent *timeLineComponent;
+    UTimelineComponent* TimeLineComponent;
 
     UFUNCTION()
-    void UpdateTimelineComp(float alpha);
+    void UpdateTimelineComp(float Alpha);
 
     UFUNCTION()
-    void OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor, UPrimitiveComponent *OtherComp, int32 OtherBodyIndex,
-                        bool bFromSweep, const FHitResult &SweepResult);
-    
+    void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+                        bool bFromSweep, const FHitResult& SweepResult);
+
+    void PlayWardrobeTransition();
 };

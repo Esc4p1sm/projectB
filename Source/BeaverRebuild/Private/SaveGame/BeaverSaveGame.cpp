@@ -7,7 +7,7 @@
 
 UBeaverSaveGame::UBeaverSaveGame()
 {
-    savedSlivers = 0;
+    
 }
 
 

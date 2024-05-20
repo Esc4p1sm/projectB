@@ -21,10 +21,10 @@ class BEAVERREBUILD_API AHugeBeaverLog : public ABeaverLog
 
   public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 rangeBtwnLogs;
+    int32 RangeBtwnLogs = 100;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, NoClear)
-    TSubclassOf<class ABeaverLog> stdLogs;
+    TSubclassOf<class ABeaverLog> StdLogs;
 
     UFUNCTION()
     void SpawnLogs();

@@ -5,88 +5,88 @@
 #include "PlayerBeaver.h"
 #include "BeaverGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "BeaverGameInstance.h"
+#include "Sound/SoundCue.h"
 
-// Sets default values
 ALevelStreamerActor::ALevelStreamerActor()
 {
-    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = false;
 
-    gameLevel       = "GameLevel";
-    menuLevel       = "MenuLevel";
-    customBlendTime = 1;
-    timeBeforeStartGame = 5.f;
+    TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Trigger"));
+    TriggerBox->SetGenerateOverlapEvents(true);
+    TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &ALevelStreamerActor::OnOverlapBegin);
+    TriggerBox->OnComponentEndOverlap.AddDynamic(this, &ALevelStreamerActor::OnOverlapEnd);
 
-    triggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Trigger"));
-    triggerBox->SetGenerateOverlapEvents(true);
-    triggerBox->OnComponentBeginOverlap.AddDynamic(this, &ALevelStreamerActor::OnOverlapBegin);
-    triggerBox->OnComponentEndOverlap.AddDynamic(this, &ALevelStreamerActor::OnOverlapEnd);
-
-    SetRootComponent(triggerBox);
+    SetRootComponent(TriggerBox);
 }
 
-// Called when the game starts or when spawned
 void ALevelStreamerActor::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (GetWorld())
-    {
-        playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    GameInstance     = StaticCast<UBeaverGameInstance*>(GetWorld()->GetGameInstance());
 
-        if(IsValid(playerController)) playerController->SetViewTarget(cameraPlayerMenu);
+    if (IsValid(PlayerController))
+    {
+        PlayerController->SetViewTarget(CameraPlayerMenu);
     }
 }
 
-void ALevelStreamerActor::OnOverlapBegin(UPrimitiveComponent *OverlappedComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp,
-                                         int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult)
+void ALevelStreamerActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+                                         int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!GetWorld())
+    {
         return;
+    }
 
     if (OtherActor->IsA<APlayerBeaver>())
     {
-        ChangeCurrentLevel(gameLevel);
+        FName LevelForLoad = GameInstance->GetCurrentLevel();
+
+        ChangeCurrentLevel(LevelForLoad);
 
         StartTimerBeforeGameStarts();
     }
 }
 
-void ALevelStreamerActor::OnOverlapEnd(UPrimitiveComponent *OverlappedComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp,
+void ALevelStreamerActor::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                                        int32 OtherBodyIndex)
 {
-    if (GetWorld() && menuLevel != NAME_None)
+    if (GetWorld() && MenuLevel != NAME_None)
     {
         FLatentActionInfo actioninfo;
-        UGameplayStatics::UnloadStreamLevel(GetWorld(), menuLevel, actioninfo, false);
+        UGameplayStatics::UnloadStreamLevel(GetWorld(), MenuLevel, actioninfo, false);
+        StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode())->SetCurrentGameMusic(GameSound[GameInstance->GetCurrentLevel()]);
     }
 }
 
 void ALevelStreamerActor::StartTimerBeforeGameStarts()
 {
     if (!GetWorld()->GetAuthGameMode())
+    {
         return;
+    }
 
-    FTimerHandle timerHandle;
+    FTimerHandle TimerHandle;
 
-    auto *ptrGameMode = StaticCast<ABeaverGameMode *>(UGameplayStatics::GetGameMode(GetWorld()));
-    
-    GetWorldTimerManager().SetTimer(timerHandle, ptrGameMode, &ABeaverGameMode::StartGame, timeBeforeStartGame, false);
+    const auto GameMode = StaticCast<ABeaverGameMode*>(UGameplayStatics::GetGameMode(GetWorld()));
+
+    GetWorldTimerManager().SetTimer(TimerHandle, GameMode, &ABeaverGameMode::StartGame, TimeBeforeStartGame, false);
 }
 
-void ALevelStreamerActor::ChangeCurrentLevel(const FName &levelName)
+void ALevelStreamerActor::ChangeCurrentLevel(const FName& levelName)
 {
-    if (IsValid(playerController) && levelName != NAME_None)
+    if (IsValid(PlayerController) && levelName != NAME_None)
     {
         FLatentActionInfo actionInfo;
         FViewTargetTransitionParams transitionParams;
 
         UGameplayStatics::LoadStreamLevel(GetWorld(), levelName, true, false, actionInfo);
 
-        transitionParams.BlendTime = customBlendTime;
+        transitionParams.BlendTime = CustomBlendTime;
 
-        playerController->SetViewTarget(cameraPlayerInGame, transitionParams);
+        PlayerController->SetViewTarget(CameraPlayerInGame, transitionParams);
     }
 }
-
-

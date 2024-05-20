@@ -11,25 +11,20 @@
 ABeaverShield::ABeaverShield()
 {
     PrimaryActorTick.bCanEverTick = false;
-    lifeTime                      = 10;
-    speedup                       = 10.f;
 
-    sphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Shield"));
-    staticMesh      = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh Shield"));
+    SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Shield"));
+    StaticMesh      = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh Shield"));
 
-    SetRootComponent(sphereComponent);
-    ptrBeaver = nullptr;
+    SetRootComponent(SphereComponent);
 }
 
 void ABeaverShield::BeginPlay()
 {
     Super::BeginPlay();
 
-    check(staticMesh);
+    SetLifeSpan(LifeTime);
 
-    SetLifeSpan(lifeTime);
-
-    sphereComponent->OnComponentHit.AddDynamic(this, &ABeaverShield::OnOverlapShieldBegin);
+    SphereComponent->OnComponentHit.AddDynamic(this, &ABeaverShield::OnOverlapShieldBegin);
 
     ChangeBeaverCapsuleCollision(ECollisionResponse::ECR_Ignore);
 
@@ -43,15 +38,15 @@ void ABeaverShield::EndPlay(const EEndPlayReason::Type EndPlayReason)
     ChangeBeaverCapsuleCollision(ECollisionResponse::ECR_Overlap);
 }
 
-void ABeaverShield::OnOverlapShieldBegin(UPrimitiveComponent *HitComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp,
-                                         FVector NormalImpulse, const FHitResult &Hit)
+void ABeaverShield::OnOverlapShieldBegin(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+                                         FVector NormalImpulse, const FHitResult& Hit)
 {
-    ABeaverLog *beaverLog = Cast<ABeaverLog>(OtherActor);
-    
+    ABeaverLog* beaverLog = Cast<ABeaverLog>(OtherActor);
+
     if (IsValid(beaverLog) && OtherActor->IsA(ABeaverLog::StaticClass()))
     {
-        beaverLog->logParams.scaleSpeed   = speedup;
-        beaverLog->logParams.logDirection = Hit.ImpactNormal;
+        beaverLog->LogParams.ScaleSpeed   = Speedup;
+        beaverLog->LogParams.LogDirection = Hit.ImpactNormal;
 
         FTimerHandle timerHandle;
         GetWorldTimerManager().SetTimer(timerHandle, this, &ABeaverShield::DestroyPickedShield, 0.5f, false);
@@ -66,20 +61,20 @@ void ABeaverShield::DestroyPickedShield()
 
 void ABeaverShield::ChangeShieldComponentsParams()
 {
-    sphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    sphereComponent->AttachToComponent(ptrBeaver->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-    sphereComponent->SetUseCCD(true);
+    SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    SphereComponent->AttachToComponent(PlayerBeaver->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+    SphereComponent->SetUseCCD(true);
 
-    staticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    staticMesh->AttachToComponent(ptrBeaver->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+    StaticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    StaticMesh->AttachToComponent(PlayerBeaver->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 }
 
-void ABeaverShield::ChangeBeaverCapsuleCollision(const ECollisionResponse response)
+void ABeaverShield::ChangeBeaverCapsuleCollision(const ECollisionResponse Response)
 {
-    ptrBeaver = StaticCast<APlayerBeaver*>(UGameplayStatics::GetActorOfClass(GetWorld(), APlayerBeaver::StaticClass()));
+    PlayerBeaver = StaticCast<APlayerBeaver*>(UGameplayStatics::GetActorOfClass(GetWorld(), APlayerBeaver::StaticClass()));
 
-    if (IsValid(ptrBeaver))
+    if (IsValid(PlayerBeaver))
     {
-        ptrBeaver->GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_LogsObjectChannel, response);
+        PlayerBeaver->GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_LOGS_OBJECT_CHANNEL, Response);
     }
 }

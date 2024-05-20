@@ -6,7 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "BeaverShield.generated.h"
 
-
 UCLASS()
 class BEAVERREBUILD_API ABeaverShield : public AActor
 {
@@ -24,28 +23,28 @@ class BEAVERREBUILD_API ABeaverShield : public AActor
   public:
     /* Public variables*/
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters of Shield")
-    int32 lifeTime;
+    int32 LifeTime = 10.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters of Shield")
-    float speedup;
+    float Speedup = 10;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    class USphereComponent *sphereComponent;
+    class USphereComponent* SphereComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    class UStaticMeshComponent *staticMesh;
+    class UStaticMeshComponent* StaticMesh;
 
   private:
     /*Private variables*/
     UPROPERTY()
-    class APlayerBeaver *ptrBeaver;
+    class APlayerBeaver* PlayerBeaver = nullptr;
 
     /* Private functions*/
     UFUNCTION()
-    void OnOverlapShieldBegin(UPrimitiveComponent *HitComponent, AActor *OtherActor, UPrimitiveComponent *OtherComp,
-                              FVector NormalImpulse, const FHitResult &Hit);
+    void OnOverlapShieldBegin(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse,
+                              const FHitResult& Hit);
 
     void DestroyPickedShield();
     void ChangeShieldComponentsParams();
-    void ChangeBeaverCapsuleCollision(const ECollisionResponse response);
+    void ChangeBeaverCapsuleCollision(const ECollisionResponse Response);
 };

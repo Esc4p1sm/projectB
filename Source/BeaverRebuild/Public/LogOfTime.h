@@ -16,11 +16,13 @@ class BEAVERREBUILD_API ALogOfTime : public ABeaverLog
 
   public:
     /* Public variables*/
+    ALogOfTime();
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object for spawn")
-    TSubclassOf<class AHourglass> hourglass;
+    TSubclassOf<class AHourglass> Hourglass;
 
     /* Public functions*/
-    //void MarkAsJumped() override;
+    // void MarkAsJumped() override;
 
   private:
     /* Private functions*/

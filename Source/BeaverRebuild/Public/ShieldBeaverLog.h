@@ -21,10 +21,10 @@ class BEAVERREBUILD_API AShieldBeaverLog : public ABeaverLog
   public:
     /* Public variables*/
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<class ABeaverShield> shield;
+    TSubclassOf<class ABeaverShield> Shield;
 
   private:
     /*Private variables*/
     UPROPERTY()
-    class APlayerBeaver *ptrBeaver;
+    class APlayerBeaver* PlayerBeaver = nullptr;
 };

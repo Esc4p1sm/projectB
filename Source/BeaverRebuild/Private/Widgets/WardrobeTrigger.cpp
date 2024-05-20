@@ -1,112 +1,109 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widgets/WardrobeTrigger.h"
-#include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
 #include "PlayerBeaver.h"
+#include "BeaverGameInstance.h"
 #include "BeaverPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "BeaverGameMode.h"
-
 #include "Runtime/Engine/Classes/Curves/CurveFloat.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 
 AWardrobeTrigger::AWardrobeTrigger()
 {
     PrimaryActorTick.bCanEverTick          = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
-    bIsInWardrobe                          = false;
-    triggerSphere                          = CreateDefaultSubobject<USphereComponent>(TEXT("Trigger Sphere"));
-    timeLineComponent                      = CreateDefaultSubobject<UTimelineComponent>(TEXT("Time Line"));
-    customBlendTime                        = 3;
+    TriggerBox                             = CreateDefaultSubobject<UBoxComponent>(TEXT("Trigger Box"));
+    TimeLineComponent                      = CreateDefaultSubobject<UTimelineComponent>(TEXT("Time Line"));
 
-    SetRootComponent(triggerSphere);
+    SetRootComponent(TriggerBox);
 }
 
 void AWardrobeTrigger::BeginPlay()
 {
     Super::BeginPlay();
 
-    triggerSphere->OnComponentBeginOverlap.AddDynamic(this, &AWardrobeTrigger::OnOverlapBegin);
+    TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AWardrobeTrigger::OnOverlapBegin);
 
-    beaver = Cast<APlayerBeaver>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    Cast<ABeaverGameMode>(GetWorld()->GetAuthGameMode())->onGameStateChange.AddUObject(this, &AWardrobeTrigger::OnReturnPlayerToGame);
-    if (curveFloat)
+    Beaver           = StaticCast<APlayerBeaver*>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    GameMode         = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
+    PlayerController = StaticCast<ABeaverPlayerController*>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+
+    GameMode->WardrobeTrigger = this;
+    GameMode->OnBackToGame.AddUObject(this, &AWardrobeTrigger::OnReturnPlayerToGame);
+
+    if (CurveFloat)
     {
-        FOnTimelineFloat functionFloatDelegate;
+        FOnTimelineFloat FunctionFloatDelegate;
 
-        functionFloatDelegate.BindDynamic(this, &AWardrobeTrigger::UpdateTimelineComp);
+        FunctionFloatDelegate.BindDynamic(this, &AWardrobeTrigger::UpdateTimelineComp);
 
-        
-
-        timeLineComponent->AddInterpFloat(curveFloat, functionFloatDelegate);
+        TimeLineComponent->AddInterpFloat(CurveFloat, FunctionFloatDelegate);
     }
 }
 
-void AWardrobeTrigger::Tick(float DeltaTime)
+void AWardrobeTrigger::UpdateTimelineComp(float Alpha)
 {
-    Super::Tick(DeltaTime);
-}
+    float BeaverVelocity                       = FMath::Lerp(BeaverVelocityMax, BeaverVelocityMin, Alpha);
+    Beaver->GetCharacterMovement()->Velocity.Y = bIsInWardrobe ? -BeaverVelocity : (BeaverVelocity + 100);
 
-void AWardrobeTrigger::UpdateTimelineComp(float alpha)
-{
-    FVector currentPlayerLocation = beaver->GetActorLocation();
-    float delataAlpha             = FApp::GetDeltaTime() * (bIsInWardrobe ? alpha : -alpha);
-    FVector playerNewLocation     = FVector{currentPlayerLocation.X, currentPlayerLocation.Y - delataAlpha, currentPlayerLocation.Z};
-
-    beaver->SetActorRelativeLocation(playerNewLocation);
-
-    if (!timeLineComponent->IsPlaying())
+    if (!TimeLineComponent->IsPlaying())
     {
-        
-            Cast<ABeaverGameMode>(GetWorld()->GetAuthGameMode())->SetGameState(EBeaverGameState::WardrobeMenu);
-        
+        bIsInWardrobe ? GameMode->SetGameState(EBeaverGameState::WardrobeMenu)
+                      : (TriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly), Beaver->EnableInput(PlayerController.Get()));
 
-        beaver->SetActorRelativeRotation(FRotator{0, 0, 0});
+        Beaver->SetActorRelativeRotation(FRotator{0, 0, 0});
     }
 }
 
-void AWardrobeTrigger::OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor, UPrimitiveComponent *OtherComp,
-                                      int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult)
+void AWardrobeTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+                                      int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    if (!GetWorld() || !GetWorld()->GetAuthGameMode() || !beaver.IsValid())
+    if (!GetWorld()->GetAuthGameMode() || !Beaver.IsValid())
+    {
         return;
-
-    FViewTargetTransitionParams params;
-    params.BlendTime      = customBlendTime;
-    auto playerController = Cast<ABeaverPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-
-    if (IsValid(playerController))
-    {
-        timeLineComponent->Play();
-
-        playerController->SetViewTarget(cameraPlayerWardrobe, params);
-        playerController->ChangeMenuNavigation();
-
-        beaver->DisableInput(playerController);
-        beaver->GetCharacterMovement()->Velocity = FVector::ZeroVector;
-        bIsInWardrobe                            = true;
     }
+
+    bIsInWardrobe = true;
+
+    Beaver->DisableInput(PlayerController.Get());
+    Beaver->GetCharacterMovement()->Velocity = FVector::ZeroVector;
+
+    TriggerBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    PlayWardrobeTransition();
 }
 
-void AWardrobeTrigger::OnReturnPlayerToGame(EBeaverGameState state)
+void AWardrobeTrigger::OnReturnPlayerToGame()
 {
-    if (!GetWorld() || !GetWorld()->GetAuthGameMode() || !beaver.IsValid())
-        return;
-
-    if (state==EBeaverGameState::InProgress && bIsInWardrobe)
+    if (!GetWorld()->GetAuthGameMode() || !Beaver.IsValid())
     {
-        FViewTargetTransitionParams params;
-        params.BlendTime      = customBlendTime;
-        auto playerController = Cast<ABeaverPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-
-        if (IsValid(playerController))
-        {
-            timeLineComponent->Reverse();
-
-            playerController->SetViewTarget(cameraPlayerInGame, params);
-
-            beaver->EnableInput(playerController);
-            bIsInWardrobe = false;
-        }
+        return;
     }
+
+    bIsInWardrobe = false;
+
+    Beaver->SetActorRelativeRotation(FRotator{0, 90, 0});
+
+    GameMode->SetGameState(EBeaverGameState::InProgress);
+
+    PlayWardrobeTransition();
+}
+
+void AWardrobeTrigger::PlayWardrobeTransition()
+{
+    if (!PlayerController.IsValid())
+    {
+        return;
+    }
+
+    FViewTargetTransitionParams TransitionParams;
+
+    TransitionParams.BlendTime = CustomBlendTime;
+
+    bIsInWardrobe ? TimeLineComponent->Play() : TimeLineComponent->Reverse();
+
+    PlayerController->SetViewTarget(bIsInWardrobe ? CameraPlayerWardrobe : CameraPlayerInGame, TransitionParams);
 }

@@ -4,38 +4,26 @@
 #include "BeaverLog.h"
 #include "BeaverGameMode.h"
 #include "PlayerBeaver.h"
+#include "BeaverGameInstance.h"
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Libs/BeaverBPFunctionLib.h"
 
-// Sets default values
 ALogSpawner::ALogSpawner()
 {
     PrimaryActorTick.bCanEverTick = false;
-    spawnLogParams.initialSpeed   = 50.f;
-    spawnLogParams.minAngle       = 45.f;
-    spawnLogParams.maxAngle       = 75.f;
-    spawnLogParams.speedChange    = 1.f;
-
-    spawnParams.spawnRangeLeft  = -170;
-    spawnParams.spawnRangeRight = 150;
-    spawnParams.distBetweenLogs = 100;
-    spawnParams.spawnRate       = 3.f;
-    spawnParams.stdChance       = 0.9f;
-    spawnParams.rateChange      = 0.03f;
-    spawnParams.spawnerLocation = FVector{50.f, 20.f, 510.f};
 }
 
 void ALogSpawner::BeginPlay()
 {
     Super::BeginPlay();
 
-    StaticCast<ABeaverGameMode*>(UGameplayStatics::GetGameMode(GetWorld()))->logSpawner = this;
+    StaticCast<ABeaverGameMode*>(UGameplayStatics::GetGameMode(GetWorld()))->LogSpawner = this;
 
-    //StartSpawn();
+    // StartSpawn();
 
-    SetActorLocation(spawnParams.spawnerLocation);
+    SetActorLocation(SpawnParams.SpawnerLocation);
 }
 
 void ALogSpawner::Tick(float DeltaTime)
@@ -45,20 +33,25 @@ void ALogSpawner::Tick(float DeltaTime)
 
 void ALogSpawner::SpawnLog()
 {
-    if (!GetWorld()->GetAuthGameMode()) return;
+    if (!GetWorld()->GetAuthGameMode())
+    {
+        return;
+    }
 
-    const FVector direction = UBeaverBPFunctionLib::MakeRandomDirection(spawnLogParams.minAngle, spawnLogParams.maxAngle);
-    const auto logForSpawn  = listOfLogs[GetRandIterarot()];
+    const FVector Direction = UBeaverBPFunctionLib::MakeRandomDirection(SpawnLogParams.MinAngle, SpawnLogParams.MaxAngle);
+    const auto LogForSpawn  = ListOfLogs[GetRandIndex()];
 
     SetRandomLocation();
 
-    if (IsValid(logForSpawn))
+    if (IsValid(LogForSpawn))
     {
-        auto newLog = GetWorld()->SpawnActor<ABeaverLog>(logForSpawn, spawnParams.spawnerLocation, FRotator::ZeroRotator);
-        
-        newLog->logParams.speed        = spawnLogParams.initialSpeed;
-        newLog->logParams.logDirection = direction;
-        newLog->onFinishRound.AddDynamic(Cast<ABeaverGameMode>(GetWorld()->GetAuthGameMode()), &ABeaverGameMode::FinishRound);
+        auto NewLog = GetWorld()->SpawnActor<ABeaverLog>(LogForSpawn, SpawnParams.SpawnerLocation, FRotator{0.f, 90.f, 90.f});
+
+        NewLog->LogParams.Speed        = SpawnLogParams.InitialSpeed;
+        NewLog->LogParams.LogDirection = Direction;
+        NewLog->OnFinishRound.AddDynamic(Cast<ABeaverGameMode>(GetWorld()->GetAuthGameMode()), &ABeaverGameMode::FinishRound);
+
+        Cast<UBeaverGameInstance>(GetWorld()->GetGameInstance())->linkLog(NewLog);
     }
 
     ChangeParamsOverTime();
@@ -66,35 +59,36 @@ void ALogSpawner::SpawnLog()
 
 void ALogSpawner::ChangeParamsOverTime()
 {
-    spawnParams.spawnRate -= spawnParams.rateChange;
-    spawnLogParams.initialSpeed += spawnLogParams.speedChange;
+    SpawnParams.SpawnRate -= SpawnParams.RateChange;
+    SpawnLogParams.InitialSpeed += SpawnLogParams.SpeedChange;
 
-    spawnParams.spawnRate       = FMath::Clamp(spawnParams.spawnRate, 0.5f, 20);
-    spawnLogParams.initialSpeed = FMath::Clamp(spawnLogParams.initialSpeed, 1, 180);
+    SpawnParams.SpawnRate       = FMath::Clamp(SpawnParams.SpawnRate, 0.5f, 20);
+    SpawnLogParams.InitialSpeed = FMath::Clamp(SpawnLogParams.InitialSpeed, 1, 180);
 
-    GetWorldTimerManager().SetTimer(timerHandle, this, &ALogSpawner::SpawnLog, spawnParams.spawnRate, false);
+    GetWorldTimerManager().SetTimer(TimerHandle, this, &ALogSpawner::SpawnLog, SpawnParams.SpawnRate, false);
 }
 
-int32 ALogSpawner::GetRandIterarot()
+int32 ALogSpawner::GetRandIndex()
 {
-    int32 randIterator;
+    int32 RandIterator;
 
-    UKismetMathLibrary::RandomBoolWithWeight(spawnParams.stdChance) ? randIterator = 0
-                                                                    : randIterator = FMath::RandRange(1, listOfLogs.Num() - 1);
-    
-    return randIterator;
+    UKismetMathLibrary::RandomBoolWithWeight(SpawnParams.StdChance) ? RandIterator = 0
+                                                                    : RandIterator = FMath::RandRange(1, ListOfLogs.Num() - 1);
+
+    return RandIterator;
 }
 
 void ALogSpawner::SetRandomLocation()
 {
     while (true)
     {
-        float y     = FMath::RandRange(spawnParams.spawnRangeLeft, spawnParams.spawnRangeRight);
-        bool bRange = fabs(spawnParams.spawnerLocation.Y - y) >= spawnParams.distBetweenLogs;
+        float NewLocationY = FMath::RandRange(SpawnParams.SpawnRangeLeft, SpawnParams.SpawnRangeRight);
+        bool bIsRange      = fabs(SpawnParams.SpawnerLocation.Y - NewLocationY) >= SpawnParams.DistBetweenLogs;
 
-        if (bRange)
+        if (bIsRange)
         {
-            spawnParams.spawnerLocation.Y = y;
+            SpawnParams.SpawnerLocation.Y = NewLocationY;
+
             break;
         }
     }
@@ -102,12 +96,13 @@ void ALogSpawner::SetRandomLocation()
 
 void ALogSpawner::DestroyAllLogs()
 {
-    for (FActorIterator logIter(GetWorld()); logIter; ++logIter)
+    for (FActorIterator LogIter(GetWorld()); LogIter; ++LogIter)
     {
-        ABeaverLog *log = Cast<ABeaverLog>(*logIter);
-        if (IsValid(log))
+        ABeaverLog* Log = Cast<ABeaverLog>(*LogIter);
+
+        if (IsValid(Log))
         {
-            log->Destroy();
+            Log->Destroy();
         }
     }
 }
@@ -115,10 +110,10 @@ void ALogSpawner::DestroyAllLogs()
 void ALogSpawner::StopSpawn()
 {
     DestroyAllLogs();
-    GetWorldTimerManager().ClearTimer(timerHandle);
+    GetWorldTimerManager().ClearTimer(TimerHandle);
 }
 
 void ALogSpawner::StartSpawn()
 {
-    GetWorldTimerManager().SetTimer(timerHandle, this, &ALogSpawner::SpawnLog, spawnParams.spawnRate, false, 0.1f);
+    GetWorldTimerManager().SetTimer(TimerHandle, this, &ALogSpawner::SpawnLog, SpawnParams.SpawnRate, false, 0.1f);
 }

@@ -1,54 +1,59 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "BeaverGameHUD.h"
-#include "BeaverGameMode.h" 
+#include "BeaverGameMode.h"
 #include "Blueprint/UserWidget.h"
 #include "Widgets/WardrobeMenuWidget.h"
 
 ABeaverGameHUD::ABeaverGameHUD()
 {
-    
 }
 
 void ABeaverGameHUD::BeginPlay()
 {
     Super::BeginPlay();
 
-    gameWidgets.Add(EBeaverGameState::PauseMenu,CreateWidget<UUserWidget>(GetWorld(),mainMenuWidgetClass));
-    gameWidgets.Add(EBeaverGameState::InProgress, CreateWidget<UUserWidget>(GetWorld(), playerHUDWidgetClass));
-    gameWidgets.Add(EBeaverGameState::PauseOptions, CreateWidget<UUserWidget>(GetWorld(), optionsMenuWidgetClass));
-    gameWidgets.Add(EBeaverGameState::GameOver, CreateWidget<UUserWidget>(GetWorld(), gameOverMenuWidgetClass));
-    gameWidgets.Add(EBeaverGameState::WardrobeMenu,CreateWidget<UUserWidget>(GetWorld(),wardrobeWidgetClass));
+    GameWidgets.Add(EBeaverGameState::PauseMenu, CreateWidget<UUserWidget>(GetWorld(), MainMenuWidgetClass));
+    GameWidgets.Add(EBeaverGameState::InProgress, CreateWidget<UUserWidget>(GetWorld(), PlayerHUDWidgetClass));
+    GameWidgets.Add(EBeaverGameState::OptionsMenu, CreateWidget<UUserWidget>(GetWorld(), OptionsMenuWidgetClass));
+    GameWidgets.Add(EBeaverGameState::GameOver, CreateWidget<UUserWidget>(GetWorld(), GameOverMenuWidgetClass));
+    GameWidgets.Add(EBeaverGameState::WardrobeMenu, CreateWidget<UUserWidget>(GetWorld(), WardrobeWidgetClass));
 
     if (GetWorld())
     {
-        ABeaverGameMode *gameMode = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
+        ABeaverGameMode* GameMode = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
 
-        if (IsValid(gameMode))
+        if (GameMode)
         {
-            gameMode->onGameStateChange.AddUObject(this, &ABeaverGameHUD::OnGameStateChanged);
-        }
+            GameMode->OnGameStateChange.AddUObject(this, &ABeaverGameHUD::OnGameStateChanged);
+        } 
     }
 }
 
-void ABeaverGameHUD::OnGameStateChanged(EBeaverGameState state)
+void ABeaverGameHUD::OnGameStateChanged(EBeaverGameState State)
 {
-    if (currentWidget)
+    if (CurrentWidget)
     {
-        if (!currentWidget->IsA<UWardrobeMenuWidget>())
+        if (State == EBeaverGameState::PauseMenu)
         {
-            currentWidget->RemoveFromViewport();
-        }    
-    } 
-     
-    if (gameWidgets.Contains(state))
-    {
-        currentWidget = gameWidgets[state];
+            CurrentWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+        }
+
+        if (!CurrentWidget->IsA<UWardrobeMenuWidget>())
+        {
+            CurrentWidget->RemoveFromParent();
+        }
     }
 
-    if (currentWidget)
+    if (GameWidgets.Contains(State))
     {
-        currentWidget->AddToViewport();
-    }  
+        CurrentWidget = GameWidgets[State];
+    }
+
+    if (CurrentWidget)
+    {
+        CurrentWidget->AddToViewport();
+        CurrentWidget->SetVisibility(ESlateVisibility::Visible);
+        CurrentWidget->SetKeyboardFocus();
+    }
 }

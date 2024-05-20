@@ -1,30 +1,50 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Widgets/MainMenuWidget.h"
 #include "Components/Button.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "BeaverGameMode.h"
+#include "BeaverPlayerController.h"
 
 bool UMainMenuWidget::Initialize()
 {
-    const bool initStatus = Super::Initialize();
+    const bool InitStatus = Super::Initialize();
 
-    if (initStatus)
+    if (InitStatus)
     {
-        optionsButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnOpenOptionsMenu); 
+        OptionsButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnOpenOptionsMenu);
+        BackToGameButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnBackToGame);
+        this->SetIsFocusable(true);
     }
 
-    return initStatus;
+    return InitStatus;
 }
 
 void UMainMenuWidget::OnOpenOptionsMenu()
 {
-    if (!GetWorld() || !GetWorld()->GetAuthGameMode()) return;
+    if (!GetWorld() || !GetWorld()->GetAuthGameMode())
+    {
+        return;
+    }
 
-    ABeaverGameMode *gameMode = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
-    gameMode->SetGameState(EBeaverGameState::PauseOptions);
-   /* auto options = CreateWidget<UUserWidget>(GetWorld(),optionsMenuWidgetClass);
-    this->RemoveFromViewport();
-    options->AddToViewport();*/
+    ABeaverGameMode* GameMode = StaticCast<ABeaverGameMode*>(GetWorld()->GetAuthGameMode());
+
+    GameMode->SetGameState(EBeaverGameState::OptionsMenu);
+}
+
+void UMainMenuWidget::OnBackToGame()
+{
+    if (!GetWorld() || !GetWorld()->GetAuthGameMode())
+    {
+        return;
+    }
+
+    const auto PlayerController = StaticCast<ABeaverPlayerController*>(GetWorld()->GetFirstPlayerController());
+
+    if (PlayerController)
+    {
+        PlayerController->bGameIsPause = false;
+    }
+
+    GetWorld()->GetAuthGameMode()->ClearPause();
 }

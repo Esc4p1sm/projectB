@@ -9,20 +9,25 @@
 #include "GameFramework/GameMode.h"
 #include "BeaverGameMode.generated.h"
 
+UDELEGATE(BlueprintCallable)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTimeLeftDelegate, int32, timeLeft);
+
+UDELEGATE(BlueprintCallable)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScoreDelegate, int32, score);
 
 UCLASS()
 class BEAVERREBUILD_API ABeaverGameMode : public AGameMode
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
   public:
     ABeaverGameMode();
 
     virtual void DecreaseLifeTime();
 
-    virtual void AddScore(int32 scoreAmount);
+    virtual void AddScore(int32 ScoreAmount);
 
-    void AddBeaver(class APlayerBeaver *beaver);
+    void AddBeaver(class APlayerBeaver* Beaver);
 
     void StartPlay() override;
 
@@ -30,33 +35,50 @@ class BEAVERREBUILD_API ABeaverGameMode : public AGameMode
     void FinishRound();
 
     UFUNCTION(BlueprintCallable)
-    virtual void AddLifeTime(int32 additionalTime);
+    virtual void AddLifeTime(int32 AdditionalTime);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player info")
-    int32 beaverScore;
-    
+    int32 BeaverScore = 0;
+
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-    FTimerHandle lifeTimerHandle;
-    
+    FTimerHandle LifeTimerHandle;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player info")
-    int32 beaverLifeTime;
+    int32 BeaverLifeTime = 40;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner info")
-    ALogSpawner* logSpawner;
+    ALogSpawner* LogSpawner;
 
-    FOnGameStateChangeSignature onGameStateChange;
+    UPROPERTY(EditAnywhere, BlueprintAssignable, Category = "Delegates")
+    FTimeLeftDelegate OnLifeTimerUpdated;
 
-    EBeaverGameState gameState = EBeaverGameState::Waiting;
+    UPROPERTY(EditAnywhere, BlueprintAssignable, Category = "Delegates")
+    FScoreDelegate OnScoreUpdated;
+
+    FOnGameStateChangeSignature OnGameStateChange;
+
+    FOnBackToGameSignature OnBackToGame;
+
+    EBeaverGameState GameState = EBeaverGameState::Waiting;
 
     void StartGame();
-    void SetGameState(EBeaverGameState state);
-    
-  protected:    
-    virtual void BeginPlay() override;
-    bool SetPause(APlayerController *PC, FCanUnpause CanUnpauseDelegate) override;
-    bool ClearPause() override;
-    
-    UPROPERTY()
-    APlayerBeaver *beaverPawn;
+    void SetGameState(EBeaverGameState State);
 
+    TWeakObjectPtr<class AWardrobeTrigger> WardrobeTrigger;
+
+    UPROPERTY()
+    class UAudioComponent* AudioComponent;
+
+    UPROPERTY(EditDefaultsOnly)
+    class USoundCue* MenuSoundCue;
+
+    void SetCurrentGameMusic(USoundCue* SoundCue);
+
+  protected:
+    virtual void BeginPlay() override;
+    bool SetPause(APlayerController* PC, FCanUnpause CanUnpauseDelegate) override;
+    bool ClearPause() override;
+
+    UPROPERTY()
+    APlayerBeaver* BeaverPawn;
 };

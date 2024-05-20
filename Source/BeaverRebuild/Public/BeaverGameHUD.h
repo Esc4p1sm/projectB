@@ -8,37 +8,44 @@
 #include "BeaverGameHUD.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class BEAVERREBUILD_API ABeaverGameHUD : public AHUD
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
+
   public:
     ABeaverGameHUD();
 
-	void BeginPlay() override;
+    void BeginPlay() override;
 
-	void OnGameStateChanged(EBeaverGameState state);
+    void OnGameStateChanged(EBeaverGameState State);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSubclassOf< UUserWidget> mainMenuWidgetClass;
+    const TMap<EBeaverGameState, UUserWidget*>& GetGameWidgets() const
+    {
+        return GameWidgets;
+    }
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<UUserWidget> playerHUDWidgetClass;
+  protected:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<UUserWidget> MainMenuWidgetClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<UUserWidget> optionsMenuWidgetClass;
+    TSubclassOf<UUserWidget> PlayerHUDWidgetClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<UUserWidget> gameOverMenuWidgetClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<UUserWidget> OptionsMenuWidgetClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<UUserWidget> wardrobeWidgetClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<UUserWidget> GameOverMenuWidgetClass;
 
-	UPROPERTY()
-    TMap<EBeaverGameState, UUserWidget *> gameWidgets;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<UUserWidget> WardrobeWidgetClass;
 
-	UPROPERTY()
-    UUserWidget *currentWidget=nullptr;
+    UPROPERTY()
+    TMap<EBeaverGameState, UUserWidget*> GameWidgets;
+
+    UPROPERTY()
+    UUserWidget* CurrentWidget = nullptr;
 };

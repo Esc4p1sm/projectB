@@ -8,25 +8,24 @@
 #include "BeaverPlayerController.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class BEAVERREBUILD_API ABeaverPlayerController : public APlayerController
 {
-	GENERATED_BODY()
-	
-	public:
-    ABeaverPlayerController();
-    
-    void BeginPlay() override;
+    GENERATED_BODY()
 
   public:
-    void ChangeMenuNavigation();
+    ABeaverPlayerController();
+
+    void BeginPlay() override;
+
+    bool bGameIsPause = false;
+
+    void OnPauseGame();
 
   private:
-    bool bGameIsPause;
     void SetupInputComponent() override;
-    void OnPauseGame();
-    void OnGameStateChanged(EBeaverGameState state);
-    
+    void OnGameStateChanged(EBeaverGameState State);
+    void ChangeMenuNavigation();
 };

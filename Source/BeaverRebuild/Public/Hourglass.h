@@ -6,21 +6,19 @@
 #include "GameFramework/Actor.h"
 #include "Hourglass.generated.h"
 
-
-
 USTRUCT(BlueprintType)
 struct FHourglassParameters
 {
     GENERATED_USTRUCT_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0.0", ClampMax = "1.0"))
-    float slowdownScale;
+    float SlowdownScale = 0.5f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 lifeTime;
+    int32 LifeTime = 15;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 timeForSlow;
+    int32 timeForSlow = 9;
 };
 
 UCLASS()
@@ -40,27 +38,26 @@ class BEAVERREBUILD_API AHourglass : public AActor
   public:
     /* Public variables*/
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hourglass Parameters")
-    FHourglassParameters hourParams;
+    FHourglassParameters HourParams;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    class USphereComponent *sphereComponent;
+    class USphereComponent* SphereComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    UStaticMeshComponent *staticMesh;
+    UStaticMeshComponent* StaticMesh;
 
   private:
     /*Private variables*/
-    UPROPERTY()
-    bool bItemPicked;
+    bool bItemPicked = true;
 
     UPROPERTY()
-    class APlayerBeaver *ptrBeaver;
-  
+    class APlayerBeaver* PlayerBeaver = nullptr;
+
     /* Private functions*/
     UFUNCTION()
-    void OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor, UPrimitiveComponent *OtherComp,
-                        int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
-   
+    void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+                        bool bFromSweep, const FHitResult& SweepResult);
+
     void ReturnToDefault();
     void SlowdownLogs();
 };

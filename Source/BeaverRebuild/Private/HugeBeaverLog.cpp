@@ -6,10 +6,9 @@
 #include "LogSpawner.h"
 #include "Libs/BeaverBPFunctionLib.h"
 
-
 AHugeBeaverLog::AHugeBeaverLog()
 {
-    rangeBtwnLogs = 100;
+    LogParams.TypeOfLog = ELogType::HugeLog;
 }
 
 void AHugeBeaverLog::SpawnLogs()
@@ -18,22 +17,25 @@ void AHugeBeaverLog::SpawnLogs()
 
     for (int32 i = 0; i < 3; ++i)
     {
-        const FVector loc = {actorLocation.X, actorLocation.Y + rangeBtwnLogs, actorLocation.Z};
-        auto *logs        = GetWorld()->SpawnActor<ABeaverLog>(stdLogs, loc, FRotator ::ZeroRotator);
+        const FVector Location = {actorLocation.X, actorLocation.Y + RangeBtwnLogs, actorLocation.Z};
+        const auto Logs        = GetWorld()->SpawnActor<ABeaverLog>(StdLogs, Location, FRotator ::ZeroRotator);
 
-        if (logs)
+        if (Logs)
         {
-            logs->logParams.logDirection     = UBeaverBPFunctionLib::MakeRandomDirection(45, 75);
-            logs->logParams.speed            = this->logParams.speed;
-            logs->logParams.impactCounterMax = 5;
+            Logs->LogParams.LogDirection     = UBeaverBPFunctionLib::MakeRandomDirection(45, 75);
+            Logs->LogParams.Speed            = this->LogParams.Speed;
+            Logs->LogParams.ImpactCounterMax = 5;
         }
-        rangeBtwnLogs -= 100;
+        RangeBtwnLogs -= 100;
     }
 }
 
 void AHugeBeaverLog::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    if (bIsJumped) SpawnLogs();
+    if (bIsJumped)
+    {
+        SpawnLogs();
+    }
 
     Super::EndPlay(EndPlayReason);
 }

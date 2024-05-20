@@ -7,5 +7,6 @@
 
 AGoldenBeaverLog::AGoldenBeaverLog()
 {
-    logParams.scaleSpeed = 2.5;
+    LogParams.ScaleSpeed = 2.5;
+    LogParams.TypeOfLog  = ELogType::GoldLog;
 }
