@@ -24,7 +24,8 @@ void UContextMenuOfPurchase::OnConfirm()
 {
     auto const GameInstance = StaticCast<UBeaverGameInstance*>(GetWorld()->GetGameInstance());
 
-    if (!GameInstance) return;
+    if (!GameInstance)
+        return;
 
     int32 NewSliversValue = GameInstance->GetSlivers() - SkinsItemWidget->SkinRowData.Price;
 
@@ -74,6 +75,8 @@ FReply UContextMenuOfPurchase::NativeOnKeyDown(const FGeometry& InGeometry, cons
 
 FReply UContextMenuOfPurchase::NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent)
 {
+    Super::NativeOnFocusReceived(InGeometry, InFocusEvent);
+
     RejectButton->SetKeyboardFocus();
 
     return FReply::Handled();
