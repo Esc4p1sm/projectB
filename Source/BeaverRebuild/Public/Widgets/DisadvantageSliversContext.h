@@ -1,7 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) 2024 Allure Games.
 
 #pragma once
 
+#include "Widgets/ContextMenuOfPurchase.h"
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "DisadvantageSliversContext.generated.h"
@@ -15,12 +16,12 @@ class BEAVERREBUILD_API UDisadvantageSliversContext : public UUserWidget
     GENERATED_BODY()
 
   public:
-    void SetCachedMenuOfPurchase(TWeakObjectPtr<class UContextMenuOfPurchase> Widget)
+    void SetCachedMenuOfPurchase(UContextMenuOfPurchase* Widget)
     {
         CachedMenuOfPurchase = Widget;
     }
-
+    
   protected:
-    UPROPERTY(BlueprintReadOnly)  
+    UPROPERTY(BlueprintReadOnly)
     TWeakObjectPtr<UContextMenuOfPurchase> CachedMenuOfPurchase;
 };

@@ -1,7 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) 2024 Allure Games.
 
 #pragma once
 
+#include "Widgets/SkinsItemWidget.h"
 #include "Widgets/WardrobeMenuWidget.h"
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
@@ -23,7 +24,7 @@ class BEAVERREBUILD_API UContextMenuOfPurchase : public UUserWidget
         SkinsItemWidget = Widget;
     }
 
-    void SetCachedWardrobeWidget(UWardrobeMenuWidget* Widget)
+    void SetCachedWardrobeWidget(class UWardrobeMenuWidget* Widget)
     {
         CachedWardrobeWidget = Widget;
     }
@@ -43,7 +44,7 @@ class BEAVERREBUILD_API UContextMenuOfPurchase : public UUserWidget
 
     TWeakObjectPtr<USkinsItemWidget> SkinsItemWidget;
 
-    TWeakObjectPtr<class UWardrobeMenuWidget> CachedWardrobeWidget;
+    TWeakObjectPtr<UWardrobeMenuWidget> CachedWardrobeWidget;
 
     void SetWardrobeWidgetVisibility();
     void AddToViewportNotificationWidget();

@@ -1,3 +1,5 @@
+// Copyright(c) 2024 Allure Games.
+
 #pragma once
 
 #include "BeaverTypes.generated.h"

@@ -1,8 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) 2024 Allure Games.
 
 #include "Widgets/ContextMenuOfPurchase.h"
 #include "Components/Button.h"
-#include "Widgets/SkinsItemWidget.h"
 #include "Widgets/DisadvantageSliversContext.h"
 #include "BeaverGameInstance.h"
 #include "Components/Image.h"
